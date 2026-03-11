@@ -77,6 +77,13 @@ export default function Dashboard() {
 
   // Show install banner
   useEffect(() => {
+    const dismissed = localStorage.getItem("pwaInstallDismissed");
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOSStandalone = (window.navigator as any).standalone === true;
+
+    if (dismissed || isStandalone || isIOSStandalone) return;
+
     const timer = setTimeout(() => {
       setShowInstall(true);
     }, 10000);
@@ -149,19 +156,13 @@ export default function Dashboard() {
       {/* Install Banner */}
       {showInstall && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
-
-          {/* Dark Overlay */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowInstall(false)}
           ></div>
 
-          {/* Install Card */}
           <div className="relative w-[95%] max-w-md mb-20 bg-white rounded-3xl shadow-xl p-6 animate-slide-up">
-
-            {/* App Info */}
             <div className="flex items-center gap-4">
-
               <img
                 src={Logo2}
                 alt="Logo"
@@ -180,25 +181,26 @@ export default function Dashboard() {
 
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-3 mt-6">
-
               <button
-                onClick={() => setShowInstall(false)}
+                onClick={() => {
+                  setShowInstall(false);
+                  localStorage.setItem("pwaInstallDismissed", "true");
+                }}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition"
               >
                 Not Now
               </button>
-
               <button
-                onClick={installPWA}
+                onClick={async () => {
+                  await installPWA();
+                  setShowInstall(false);
+                }}
                 className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold shadow hover:opacity-90 transition"
               >
                 Install
               </button>
-
             </div>
-
           </div>
         </div>
       )}
