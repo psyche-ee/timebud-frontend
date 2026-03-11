@@ -5,9 +5,18 @@ export const usePWAInstall = () => {
   const [showInstall, setShowInstall] = useState(false);
 
   useEffect(() => {
+    // 1. Check if the event already fired before this component mounted
+    if (window.deferredPrompt) {
+      setDeferredPrompt(window.deferredPrompt);
+      setShowInstall(true);
+      return;
+    }
+
     const handler = (e: any) => {
       e.preventDefault();
+      // 2. Store it in state AND globally
       setDeferredPrompt(e);
+      window.deferredPrompt = e; 
       setShowInstall(true);
     };
 
@@ -15,6 +24,7 @@ export const usePWAInstall = () => {
 
     window.addEventListener("appinstalled", () => {
       setShowInstall(false);
+      setDeferredPrompt(null);
     });
 
     return () => {

@@ -24,18 +24,12 @@ export default function Records() {
         const res = await api.get("/records");
         const data = res.data.data;
 
-        // compute earnings for each record
-        const recordsWithEarnings = data.map((r: any) => ({
-          ...r,
-          earnings: r.total_hrs * r.rate_per_hr,
-        }));
-
-        setRecords(recordsWithEarnings);
-        localStorage.setItem("recordsCache", JSON.stringify(recordsWithEarnings));
+        setRecords(data);
+        localStorage.setItem("recordsCache", JSON.stringify(data));
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        setLoading(false);  
       }
     };
 

@@ -3,60 +3,55 @@ import BottomNav from "../../components/BottomNav";
 import Header from "../../components/Header";
 import api from "../../api/axios";
 
-export default function Earnings() {
-  const [records, setRecords] = useState<any[]>(() => {
-    const cached = localStorage.getItem("recordsCache");
-    return cached ? JSON.parse(cached) : [];
-  });
-  const [loading, setLoading] = useState(records.length === 0);
+const CACHE_KEY = "earningsCache";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+export default function Earnings() {
   const [earnings, setEarnings] = useState({
     total: 0,
     this_week: 0,
     this_month: 0,
   });
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchRecords = async () => {
-      try {
-        const res = await api.get("/records");
-        const data = res.data.data;
+    const cached = localStorage.getItem(CACHE_KEY);
 
-        setRecords(data);
-        localStorage.setItem("recordsCache", JSON.stringify(data));
+    if (cached) {
+      const parsed = JSON.parse(cached);
 
-        // compute earnings from records
-        computeEarnings(data);
+      const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
 
-      } catch (err) {
-        console.error("Failed to fetch records:", err);
-      } finally {
+      if (!isExpired) {
+        setEarnings(parsed.data);
         setLoading(false);
+        return;
       }
-    };
+    }
 
-    // only fetch if no cached records
-    if (records.length === 0) fetchRecords();
-    else computeEarnings(records);
+    fetchEarnings();
   }, []);
 
-  const computeEarnings = (recordsData: any[]) => {
-    const now = new Date();
-    let total = 0, thisWeek = 0, thisMonth = 0;
+  const fetchEarnings = async () => {
+    try {
+      const res = await api.get("/earnings");
+      const data = res.data.data;
 
-    recordsData.forEach((r) => {
-      const earn = r.total_hrs * r.rate_per_hr;
-      total += earn;
+      setEarnings(data);
 
-      const recordDate = new Date(r.time_in);
-      const diffDays = (now.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24);
-
-      if (diffDays <= 7) thisWeek += earn;
-      if (diffDays <= 30) thisMonth += earn;
-    });
-
-    setEarnings({ total, this_week: thisWeek, this_month: thisMonth });
-    localStorage.setItem("earningsCache", JSON.stringify({ total, this_week: thisWeek, this_month: thisMonth }));
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+          data,
+          timestamp: Date.now(),
+        })
+      );
+    } catch (err) {
+      console.error("Failed to fetch earnings:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,6 +64,7 @@ export default function Earnings() {
         {/* Total Earnings Card */}
         <div className="bg-primary/10 rounded-3xl shadow-md p-6 flex flex-col items-center justify-center space-y-2">
           <p className="text-sm text-gray-500">Total Earnings</p>
+
           {loading ? (
             <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
           ) : (
@@ -82,11 +78,17 @@ export default function Earnings() {
         <div className="bg-surface rounded-2xl shadow-md p-4 space-y-3">
           <h2 className="font-semibold text-gray-700 text-lg">Breakdown</h2>
 
-          {["this_week", "this_month", "total"].map((key) => (
-            <div key={key} className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600">
-                {key === "this_week" ? "This Week" : key === "this_month" ? "This Month" : "All Time"}
-              </span>
+          {[
+            { key: "this_week", label: "This Week" },
+            { key: "this_month", label: "This Month" },
+            { key: "total", label: "All Time" },
+          ].map(({ key, label }) => (
+            <div
+              key={key}
+              className="flex justify-between py-2 border-b border-gray-100"
+            >
+              <span className="text-gray-600">{label}</span>
+
               {loading ? (
                 <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
               ) : (
