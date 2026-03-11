@@ -4,20 +4,30 @@ import Header from "../../components/Header";
 import api from "../../api/axios";
 
 export default function Earnings() {
-  const [earnings, setEarnings] = useState({
-    total: 0,
-    this_week: 0,
-    this_month: 0,
+  const [earnings, setEarnings] = useState(() => {
+    const cached = localStorage.getItem("earningsCache");
+    return cached
+      ? JSON.parse(cached)
+      : { total: 0, this_week: 0, this_month: 0 };
   });
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(!localStorage.getItem("earningsCache"));
 
   useEffect(() => {
     const fetchEarnings = async () => {
       try {
         const res = await api.get("/earnings");
+
         if (res.data.status === 1) {
           setEarnings(res.data.data);
+
+          // cache data
+          localStorage.setItem(
+            "earningsCache",
+            JSON.stringify(res.data.data)
+          );
         }
+
       } catch (err) {
         console.error("Failed to fetch earnings:", err);
       } finally {
@@ -39,7 +49,11 @@ export default function Earnings() {
         <div className="bg-primary/10 rounded-3xl shadow-md p-6 flex flex-col items-center justify-center space-y-2">
           <p className="text-sm text-gray-500">Total Earnings</p>
           <p className="text-4xl font-extrabold text-primary">
-            {loading ? "₱0.00" : `₱${earnings.total.toFixed(2)}`}
+            {loading ? (
+              <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+            ) : (
+              `₱${earnings.total.toFixed(2)}`
+            )}
           </p>
         </div>
 
@@ -50,21 +64,33 @@ export default function Earnings() {
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-600">This Week</span>
             <span className="font-medium text-gray-800">
-              {loading ? "₱0.00" : `₱${earnings.this_week.toFixed(2)}`}
+              {loading ? (
+                <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                `₱${earnings.this_week.toFixed(2)}`
+              )}
             </span>
           </div>
 
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-600">This Month</span>
             <span className="font-medium text-gray-800">
-              {loading ? "₱0.00" : `₱${earnings.this_month.toFixed(2)}`}
+              {loading ? (
+                <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                `₱${earnings.this_month.toFixed(2)}`
+              )}
             </span>
           </div>
 
           <div className="flex justify-between py-2">
             <span className="text-gray-600">All Time</span>
             <span className="font-medium text-gray-800">
-              {loading ? "₱0.00" : `₱${earnings.total.toFixed(2)}`}
+              {loading ? (
+                <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                `₱${earnings.total.toFixed(2)}`
+              )}
             </span>
           </div>
         </div>

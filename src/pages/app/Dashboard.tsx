@@ -40,7 +40,12 @@ export default function Dashboard() {
   const [showBanner, setShowBanner] = useState(false);
 
   const [time, setTime] = useState(new Date());
-  const [dashboard, setDashboard] = useState<any>(null);
+  const [dashboard, setDashboard] = useState<any>(() => {
+    const cached = localStorage.getItem("dashboardCache");
+    return cached ? JSON.parse(cached) : null;
+  });
+
+  const [loading, setLoading] = useState(!dashboard);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const ratePerHr = Number(user.rate_per_hr);
@@ -112,11 +117,20 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await api.get("/dashboard"); 
-        // console.log('Dashboard data:', res.data.data); 
+        const res = await api.get("/dashboard");
+
         setDashboard(res.data.data);
+
+        // Save cache
+        localStorage.setItem(
+          "dashboardCache",
+          JSON.stringify(res.data.data)
+        );
+
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -146,6 +160,24 @@ export default function Dashboard() {
     month: "long",
     day: "numeric"
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="max-w-md mx-auto p-4 space-y-4 animate-pulse">
+
+          <div className="h-16 bg-gray-200 rounded-xl"></div>
+
+          <div className="h-24 bg-gray-200 rounded-xl"></div>
+
+          <div className="h-24 bg-gray-200 rounded-xl"></div>
+
+          <div className="h-12 bg-gray-200 rounded-xl"></div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">

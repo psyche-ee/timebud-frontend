@@ -7,7 +7,12 @@ import * as htmlToImage from "html-to-image";
 export default function Records() {
 
   const [filter, setFilter] = useState(7);
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<any[]>(() => {
+    const cached = localStorage.getItem("recordsCache");
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  const [loading, setLoading] = useState(records.length === 0);
   const exportRef = useRef<HTMLDivElement>(null);
   const [showExportModal, setShowExportModal] = useState(false);
 
@@ -19,9 +24,19 @@ export default function Records() {
     const fetchRecords = async () => {
       try {
         const res = await api.get("/records");
+
         setRecords(res.data.data);
+
+        // save cache
+        localStorage.setItem(
+          "recordsCache",
+          JSON.stringify(res.data.data)
+        );
+
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -43,13 +58,41 @@ export default function Records() {
   const downloadPNG = async () => {
     if (!exportRef.current) return;
 
-    const dataUrl = await htmlToImage.toPng(exportRef.current);
+    const dataUrl = await htmlToImage.toPng(exportRef.current, {
+      pixelRatio: 3,
+    });
 
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    // SHARE SUPPORT
+    if (navigator.share) {
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "timebud-records.png", { type: blob.type });
+
+      try {
+        await navigator.share({
+          files: [file],
+          title: "TimeBud Records"
+        });
+        return;
+      } catch (err) {
+        console.log("Share cancelled");
+      }
+    }
+
+    // iOS fallback
+    if (isIOS) {
+      window.open(dataUrl);
+      return;
+    }
+
+    // desktop/android download
     const link = document.createElement("a");
     link.download = "timebud-records.png";
     link.href = dataUrl;
     link.click();
   };
+  
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -89,6 +132,26 @@ export default function Records() {
           ))}
 
         </div>
+
+        {loading && (
+          <div className="space-y-3">
+            {[1,2,3,4].map((i) => (
+              <div
+                key={i}
+                className="bg-surface p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse"
+              >
+                <div className="flex justify-between">
+                  <div className="space-y-2">
+                    <div className="h-3 w-20 bg-gray-200 rounded"></div>
+                    <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                    <div className="h-3 w-28 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="h-4 w-14 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Records List */}
         <div className="space-y-3">
