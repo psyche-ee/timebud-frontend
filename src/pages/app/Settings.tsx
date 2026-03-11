@@ -2,6 +2,7 @@ import BottomNav from "../../components/BottomNav";
 import Header from "../../components/Header";
 import api from "../../api/axios";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
+import { toast } from "sonner";
 
 import {
   IoPersonOutline,
@@ -31,6 +32,8 @@ export default function Settings() {
     }
   };
 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto p-4 space-y-4">
@@ -43,9 +46,15 @@ export default function Settings() {
             <h1 className="text-xl font-semibold text-secondary">
               Settings
             </h1>
-            {!isStandalone && showInstall && (
+            {!isStandalone && (showInstall || isIOS) && (
               <button
-                onClick={installPWA}
+                onClick={() => {
+                  if (isIOS) {
+                    toast("Tap Share → Add to Home Screen to install TimeBud.");
+                  } else {
+                    installPWA();
+                  }
+                }}
                 className="flex items-center gap-1 text-sm text-primary bg-primary/10 px-3 py-1 rounded-full"
               >
                 <GoDownload />
