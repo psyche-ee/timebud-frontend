@@ -1,6 +1,7 @@
 import BottomNav from "../../components/BottomNav";
 import Header from "../../components/Header";
 import api from "../../api/axios";
+import { usePWAInstall } from "../../hooks/usePWAInstall";
 
 import {
   IoPersonOutline,
@@ -9,9 +10,15 @@ import {
   IoChevronForward
 } from "react-icons/io5";
 
+import { GoDownload } from "react-icons/go";
+
 import { FiLogOut } from "react-icons/fi";
 
 export default function Settings() {
+  const { installPWA } = usePWAInstall();
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSStandalone = (window.navigator as any).standalone === true;
+
   const handleLogout = async () => {
     try {
       await api.post("/logout");
@@ -117,6 +124,40 @@ export default function Settings() {
             </div>
 
           </div>
+
+          {/* Installation Section */}
+          {!(isStandalone || isIOSStandalone) && (
+            <div className="mb-6">
+
+              <p className="text-sm text-muted mb-2">Installation</p>
+
+              <div className="bg-surface rounded-2xl shadow-sm divide-y">
+
+                <button
+                  onClick={installPWA}
+                  className="flex items-center justify-between p-4 hover:bg-gray-50"
+                >
+
+                  <div className="flex items-center gap-3">
+
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <GoDownload className="text-primary text-lg" />
+                    </div>
+
+                    <span className="font-medium text-secondary">
+                      Install
+                    </span>
+
+                  </div>
+
+                  <IoChevronForward className="text-muted" />
+
+                </button>
+
+              </div>
+
+            </div>
+          )}
 
           {/* Logout */}
           <div className="bg-surface rounded-2xl shadow-sm">
