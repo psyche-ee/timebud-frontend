@@ -4,39 +4,97 @@ import Header from "../../components/Header";
 import api from "../../api/axios";
 import * as htmlToImage from "html-to-image";
 
+const CACHE_KEY = "recordsCache";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export default function Records() {
   const [filter, setFilter] = useState(7);
-  const [records, setRecords] = useState<any[]>(() => {
-    const cached = localStorage.getItem("recordsCache");
-    return cached ? JSON.parse(cached) : [];
-  });
-
-  const [loading, setLoading] = useState(records.length === 0);
+  const [records, setRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const [showExportModal, setShowExportModal] = useState(false);
 
   const handlePreview = () => setShowExportModal(true);
 
-  // fetch records
+  // Get current user from localStorage or auth context
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  // Fetch records
   useEffect(() => {
     const fetchRecords = async () => {
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await api.get("/records");
         const data = res.data.data;
 
-        setRecords(data);
-        localStorage.setItem("recordsCache", JSON.stringify(data));
+        // Security: Verify records belong to current user
+        if (data && Array.isArray(data)) {
+          const isValid = data.every((r: any) => r.user_id === currentUser.id);
+          if (!isValid) {
+            console.error("Security: Records don't belong to current user");
+            setRecords([]);
+            localStorage.removeItem(CACHE_KEY);
+            return;
+          }
+
+          setRecords(data);
+          localStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({ data, timestamp: Date.now() })
+          );
+        } else {
+          setRecords([]);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch records:", err);
+        setRecords([]);
       } finally {
-        setLoading(false);  
+        setLoading(false);
       }
     };
 
-    if (records.length === 0) fetchRecords();
-  }, []);
+    // Check cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached && currentUser) {
+      try {
+        const parsed = JSON.parse(cached);
+        const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
 
-  // filter by days
+        if (!isExpired) {
+          // Verify cache belongs to current user
+          const cachedData = Array.isArray(parsed.data)
+            ? parsed.data
+            : parsed.data?.data || [];
+          const isValid = cachedData.every(
+            (r: any) => r.user_id === currentUser.id
+          );
+
+          if (isValid) {
+            setRecords(cachedData);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to parse cache:", err);
+        localStorage.removeItem(CACHE_KEY);
+      }
+    }
+
+    fetchRecords();
+  }, [currentUser]);
+
+  // Filter by days
   const filteredRecords = useMemo(() => {
     const now = new Date();
     return records.filter((r) => {
@@ -129,17 +187,21 @@ export default function Records() {
         {!loading && filteredRecords.length > 0 && (
           <div className="space-y-3">
             {filteredRecords.map((r) => {
-              const date = new Date(r.time_in).toLocaleDateString(undefined, {
-                month: "short", day: "numeric", year: "numeric",
+              const date = new Date(r.time_in).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
               });
 
               const timeIn = new Date(r.time_in).toLocaleTimeString([], {
-                hour: "2-digit", minute: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
               });
 
               const timeOut = r.time_out
                 ? new Date(r.time_out).toLocaleTimeString([], {
-                    hour: "2-digit", minute: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })
                 : "Active";
 
@@ -172,10 +234,14 @@ export default function Records() {
                 {filteredRecords.map((r) => {
                   const date = new Date(r.time_in).toLocaleDateString();
                   const timeIn = new Date(r.time_in).toLocaleTimeString([], {
-                    hour: "2-digit", minute: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   });
                   const timeOut = r.time_out
-                    ? new Date(r.time_out).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                    ? new Date(r.time_out).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                     : "Active";
 
                   return (
@@ -209,7 +275,6 @@ export default function Records() {
             </div>
           </div>
         )}
-
       </div>
 
       {(!loading && filteredRecords.length === 0) && (
