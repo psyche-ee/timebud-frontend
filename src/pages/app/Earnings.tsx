@@ -36,19 +36,21 @@ export default function Earnings() {
   const fetchEarnings = async () => {
     try {
       const res = await api.get("/earnings");
-      const data = res.data.data;
+      const data = res.data?.data;
+
+      if (!data) {
+        throw new Error("Invalid earnings data");
+      }
 
       setEarnings(data);
 
       localStorage.setItem(
         CACHE_KEY,
-        JSON.stringify({
-          data,
-          timestamp: Date.now(),
-        })
+        JSON.stringify({ data, timestamp: Date.now() })
       );
     } catch (err) {
       console.error("Failed to fetch earnings:", err);
+      setEarnings({ total: 0, this_week: 0, this_month: 0 }); // fallback
     } finally {
       setLoading(false);
     }
