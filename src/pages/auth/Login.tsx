@@ -2,6 +2,7 @@ import { useState } from "react";
 import Logo from "../../assets/logo.svg";
 import api from "../../api/axios";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
 
@@ -9,32 +10,28 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const response = await api.post("/login", {
-        email: email,
-        password: password,
-      });
+      const response = await api.post("/login", { email, password });
 
       if (response.data.status === 1) {
-        const token = response.data.data.token;
-
-        // store token
-        localStorage.setItem("token", token);
-
-        // store user
+        localStorage.setItem("token", response.data.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.data));
-
-        // redirect
-        window.location.href = "/dashboard";
+        navigate("/dashboard");
       }
-
     } catch (err: any) {
       setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,7 +112,7 @@ export default function Login() {
             type="submit"
             className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary-hover transition"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>

@@ -29,6 +29,21 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const promptEvent = e as BeforeInstallPromptEvent;
+
+      promptEvent.preventDefault();
+      window.deferredPrompt = promptEvent;
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

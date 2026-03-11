@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { usePWAInstall } from "../../hooks/usePWAInstall";
+// import { usePWAInstall } from "../../hooks/usePWAInstall";
 import Header from "../../components/Header";
 import Logo from "../../assets/earning.svg";
-import Logo2 from "../../assets/logo.svg";
+// import Logo2 from "../../assets/logo.svg";
 import ActivityCard from "../../components/ActivityCard";
 import RecentRecords from "../../components/Records";
 import BottomNav from "../../components/BottomNav";
@@ -36,8 +36,8 @@ const syncOfflineActions = async () => {
 };
 
 export default function Dashboard() {
-  const { installPWA, showInstall } = usePWAInstall();
-  const [showBanner, setShowBanner] = useState(false);
+  // const { installPWA, showInstall } = usePWAInstall();
+  // const [showBanner, setShowBanner] = useState(false);
 
   const [time, setTime] = useState(new Date());
   const [dashboard, setDashboard] = useState<any>(() => {
@@ -138,21 +138,21 @@ export default function Dashboard() {
   }, []);
 
   // Show install banner
-  useEffect(() => {
-    const dismissed = localStorage.getItem("pwaInstallDismissed");
+  // useEffect(() => {
+  //   const dismissed = localStorage.getItem("pwaInstallDismissed");
 
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
+  //   const isStandalone =
+  //     window.matchMedia("(display-mode: standalone)").matches ||
+  //     (window.navigator as any).standalone === true;
 
-    if (!showInstall || dismissed || isStandalone) return;
+  //   if (!showInstall || dismissed || isStandalone) return;
 
-    const timer = setTimeout(() => {
-      setShowBanner(true);
-    }, 10000);
+  //   const timer = setTimeout(() => {
+  //     setShowBanner(true);
+  //   }, 10000);
 
-    return () => clearTimeout(timer);
-  }, [showInstall]);
+  //   return () => clearTimeout(timer);
+  // }, [showInstall]);
 
   const formattedTime = time.toLocaleTimeString();
   const formattedDate = time.toLocaleDateString(undefined, {
@@ -235,7 +235,7 @@ export default function Dashboard() {
       </div>
 
       {/* Install Banner */}
-      {showBanner && (
+      {/* {showBanner && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -284,7 +284,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       <BottomNav />
 
