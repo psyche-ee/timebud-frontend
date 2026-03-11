@@ -3,6 +3,7 @@ import Logo from "../../assets/logo.svg";
 import api from "../../api/axios";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Login() {
 
@@ -27,9 +28,11 @@ export default function Login() {
         localStorage.setItem("token", response.data.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.data));
         navigate("/dashboard");
+      } else {
+        toast.error(response.data.message || "Login failed");
       }
     } catch (err: any) {
-      setError("Invalid email or password");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
