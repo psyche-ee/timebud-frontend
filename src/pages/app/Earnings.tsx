@@ -4,7 +4,7 @@ import Header from "../../components/Header";
 import api from "../../api/axios";
 
 const CACHE_KEY = "earningsCache";
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const DEFAULT_EARNINGS = {
   total: 0,
@@ -15,32 +15,6 @@ const DEFAULT_EARNINGS = {
 export default function Earnings() {
   const [earnings, setEarnings] = useState(DEFAULT_EARNINGS);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const cached = localStorage.getItem(CACHE_KEY);
-
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
-
-        if (!isExpired && parsed.data) {
-          setEarnings({
-            total: parsed.data.total ?? 0,
-            this_week: parsed.data.this_week ?? 0,
-            this_month: parsed.data.this_month ?? 0,
-          });
-          setLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error("Failed to parse cache:", err);
-        localStorage.removeItem(CACHE_KEY);
-      }
-    }
-
-    fetchEarnings();
-  }, []);
 
   const fetchEarnings = async () => {
     try {
@@ -59,6 +33,7 @@ export default function Earnings() {
 
       setEarnings(earningsData);
 
+      // Always update cache on every visit
       localStorage.setItem(
         CACHE_KEY,
         JSON.stringify({ data: earningsData, timestamp: Date.now() })
@@ -74,6 +49,11 @@ export default function Earnings() {
   const formatCurrency = (value: number) => {
     return `₱${(value || 0).toFixed(2)}`;
   };
+
+  useEffect(() => {
+    // Always fetch fresh data on page visit
+    fetchEarnings();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pb-24">

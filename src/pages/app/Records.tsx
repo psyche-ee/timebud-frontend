@@ -5,7 +5,7 @@ import api from "../../api/axios";
 import * as htmlToImage from "html-to-image";
 
 const CACHE_KEY = "recordsCache";
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export default function Records() {
   const [filter, setFilter] = useState(7);
@@ -48,6 +48,7 @@ export default function Records() {
           }
 
           setRecords(data);
+          // Always update cache on every visit
           localStorage.setItem(
             CACHE_KEY,
             JSON.stringify({ data, timestamp: Date.now() })
@@ -63,34 +64,7 @@ export default function Records() {
       }
     };
 
-    // Check cache first
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached && currentUser) {
-      try {
-        const parsed = JSON.parse(cached);
-        const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
-
-        if (!isExpired) {
-          // Verify cache belongs to current user
-          const cachedData = Array.isArray(parsed.data)
-            ? parsed.data
-            : parsed.data?.data || [];
-          const isValid = cachedData.every(
-            (r: any) => r.user_id === currentUser.id
-          );
-
-          if (isValid) {
-            setRecords(cachedData);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to parse cache:", err);
-        localStorage.removeItem(CACHE_KEY);
-      }
-    }
-
+    // Always fetch fresh data on page visit
     fetchRecords();
   }, [currentUser]);
 
