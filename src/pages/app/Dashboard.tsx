@@ -9,9 +9,35 @@ import BottomNav from "../../components/BottomNav";
 import api from "../../api/axios";
 import { toast } from "sonner";
 
+// Store offline actions
+const saveOfflineAction = (action: "time-in" | "time-out", timestamp: string) => {
+  const offlineQueue = JSON.parse(localStorage.getItem("offlineQueue") || "[]");
+  offlineQueue.push({ action, timestamp });
+  localStorage.setItem("offlineQueue", JSON.stringify(offlineQueue));
+};
+
+// Sync offline actions
+const syncOfflineActions = async () => {
+  const offlineQueue = JSON.parse(localStorage.getItem("offlineQueue") || "[]");
+  if (!offlineQueue.length) return;
+
+  for (const record of offlineQueue) {
+    try {
+      await api.post(record.action === "time-in" ? "/time-in" : "/time-out", {
+        timestamp: record.timestamp
+      });
+    } catch (err) {
+      console.log("Failed to sync offline record", err);
+      return; // stop syncing to retry later
+    }
+  }
+
+  localStorage.removeItem("offlineQueue"); // clear after successful sync
+};
+
 export default function Dashboard() {
-  const { installPWA } = usePWAInstall();
-  const [showInstall, setShowInstall] = useState(false);
+  const { installPWA, showInstall } = usePWAInstall();
+  const [showBanner, setShowBanner] = useState(false);
 
   const [time, setTime] = useState(new Date());
   const [dashboard, setDashboard] = useState<any>(null);
@@ -20,36 +46,58 @@ export default function Dashboard() {
   const ratePerHr = Number(user.rate_per_hr);
 
   const handleTimein = async () => {
+    const timestamp = new Date().toISOString();
+
+    if (!navigator.onLine) {
+      saveOfflineAction("time-in", timestamp);
+      toast.success("Time-in recorded offline. Will sync when online.");
+      return;
+    }
+
     try {
-      const res = await api.post("/time-in");
-
-      if (res.data.status === 1) {
-        toast.success(res.data.message);
-      } else {
-        toast.warning(res.data.message);
-      }
-
+      const res = await api.post("/time-in", { timestamp });
+      if (res.data.status === 1) toast.success(res.data.message);
+      else toast.warning(res.data.message);
     } catch (err) {
-      toast.error("Time-in failed");
+      saveOfflineAction("time-in", timestamp);
+      toast.success("Offline fallback: Time-in will sync later.");
       console.log(err);
     }
   };
 
   const handleTimeout = async () => {
+    const timestamp = new Date().toISOString();
+
+    if (!navigator.onLine) {
+      saveOfflineAction("time-out", timestamp);
+      toast.success("Time-out recorded offline. Will sync when online.");
+      return;
+    }
+
     try {
-      const res = await api.post("/time-out");
-
-      if (res.data.status === 1) {
-        toast.success(res.data.message);
-      } else {
-        toast.warning(res.data.message);
-      }
-
+      const res = await api.post("/time-out", { timestamp });
+      if (res.data.status === 1) toast.success(res.data.message);
+      else toast.warning(res.data.message);
     } catch (err) {
-      toast.error("Time-out failed");
+      saveOfflineAction("time-out", timestamp);
+      toast.success("Offline fallback: Time-out will sync later.");
       console.log(err);
     }
   };
+
+  // Listen for Online Event
+  useEffect(() => {
+    const handleOnline = () => {
+      toast.success("Back online! Syncing offline records...");
+      syncOfflineActions();
+    };
+
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
 
   // Digital clock
   useEffect(() => {
@@ -65,7 +113,7 @@ export default function Dashboard() {
     const fetchDashboard = async () => {
       try {
         const res = await api.get("/dashboard"); 
-        console.log('Dashboard data:', res.data.data); 
+        // console.log('Dashboard data:', res.data.data); 
         setDashboard(res.data.data);
       } catch (err) {
         console.error(err);
@@ -79,17 +127,18 @@ export default function Dashboard() {
   useEffect(() => {
     const dismissed = localStorage.getItem("pwaInstallDismissed");
 
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
 
-    if (dismissed || isStandalone || isIOSStandalone) return;
+    if (!showInstall || dismissed || isStandalone) return;
 
     const timer = setTimeout(() => {
-      setShowInstall(true);
+      setShowBanner(true);
     }, 10000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [showInstall]);
 
   const formattedTime = time.toLocaleTimeString();
   const formattedDate = time.toLocaleDateString(undefined, {
@@ -154,11 +203,11 @@ export default function Dashboard() {
       </div>
 
       {/* Install Banner */}
-      {showInstall && (
+      {showBanner && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowInstall(false)}
+            onClick={() => setShowBanner(false)}
           ></div>
 
           <div className="relative w-[95%] max-w-md mb-20 bg-white rounded-3xl shadow-xl p-6 animate-slide-up">
@@ -184,7 +233,7 @@ export default function Dashboard() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
-                  setShowInstall(false);
+                  setShowBanner(false);
                   localStorage.setItem("pwaInstallDismissed", "true");
                 }}
                 className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition"
@@ -194,7 +243,7 @@ export default function Dashboard() {
               <button
                 onClick={async () => {
                   await installPWA();
-                  setShowInstall(false);
+                  setShowBanner(false);
                 }}
                 className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold shadow hover:opacity-90 transition"
               >

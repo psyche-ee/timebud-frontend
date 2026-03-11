@@ -15,9 +15,10 @@ import { GoDownload } from "react-icons/go";
 import { FiLogOut } from "react-icons/fi";
 
 export default function Settings() {
-  const { installPWA } = usePWAInstall();
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-  const isIOSStandalone = (window.navigator as any).standalone === true;
+  const { installPWA, showInstall } = usePWAInstall();
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as any).standalone === true;
 
   const handleLogout = async () => {
     try {
@@ -38,9 +39,20 @@ export default function Settings() {
         <div className="max-w-md mx-auto p-4">
 
           {/* Title */}
-          <h1 className="text-xl font-semibold text-secondary mb-6">
-            Settings
-          </h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-semibold text-secondary">
+              Settings
+            </h1>
+            {!isStandalone && showInstall && (
+              <button
+                onClick={installPWA}
+                className="flex items-center gap-1 text-sm text-primary bg-primary/10 px-3 py-1 rounded-full"
+              >
+                <GoDownload />
+                Install
+              </button>
+            )}
+          </div>
 
           {/* Account Section */}
           <div className="mb-6">
@@ -124,40 +136,6 @@ export default function Settings() {
             </div>
 
           </div>
-
-          {/* Installation Section */}
-          {!(isStandalone || isIOSStandalone) && (
-            <div className="mb-6">
-
-              <p className="text-sm text-muted mb-2">Installation</p>
-
-              <div className="bg-surface rounded-2xl shadow-sm divide-y">
-
-                <button
-                  onClick={installPWA}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50"
-                >
-
-                  <div className="flex items-center gap-3">
-
-                    <div className="bg-primary/10 p-2 rounded-lg">
-                      <GoDownload className="text-primary text-lg" />
-                    </div>
-
-                    <span className="font-medium text-secondary">
-                      Install
-                    </span>
-
-                  </div>
-
-                  <IoChevronForward className="text-muted" />
-
-                </button>
-
-              </div>
-
-            </div>
-          )}
 
           {/* Logout */}
           <div className="bg-surface rounded-2xl shadow-sm">

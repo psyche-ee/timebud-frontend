@@ -5,13 +5,17 @@ export const usePWAInstall = () => {
   const [showInstall, setShowInstall] = useState(false);
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault(); // Prevent automatic prompt
+    const handler = (e: any) => {
+      e.preventDefault();
       setDeferredPrompt(e);
       setShowInstall(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
+
+    window.addEventListener("appinstalled", () => {
+      setShowInstall(false);
+    });
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
@@ -20,9 +24,10 @@ export const usePWAInstall = () => {
 
   const installPWA = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt(); // Show install prompt
-    const choiceResult = await deferredPrompt.userChoice;
-    console.log("User choice:", choiceResult.outcome);
+
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+
     setDeferredPrompt(null);
     setShowInstall(false);
   };
