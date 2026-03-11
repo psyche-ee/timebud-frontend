@@ -26,6 +26,9 @@ export default function Settings() {
       await api.post("/logout");
       localStorage.removeItem("user");
       localStorage.removeItem("token");
+      localStorage.removeItem("dashboardCache");
+      localStorage.removeItem("earningsCache");
+      localStorage.removeItem("recordsCache");
       window.location.href = "/login";
     } catch (err) {
       console.log("Logout failed", err);
