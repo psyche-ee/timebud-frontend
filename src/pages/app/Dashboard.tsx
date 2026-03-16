@@ -98,9 +98,15 @@ export default function Dashboard() {
       return;
     }
 
-     const today = new Date().toISOString().split("T")[0];
+    const [hours, minutes] = manualTime.split(":");
 
-    const timestamp = `${today}T${manualTime}:00`;
+    const manualDate = new Date();
+    manualDate.setHours(Number(hours));
+    manualDate.setMinutes(Number(minutes));
+    manualDate.setSeconds(0);
+    manualDate.setMilliseconds(0);
+
+    const timestamp = manualDate.toLocaleString("sv-SE").replace(" ", "T");
 
     if (!navigator.onLine) {
       saveOfflineAction(manualType, timestamp);
