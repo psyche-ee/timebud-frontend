@@ -50,12 +50,9 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            // <ProtectedRoute>
-            //   <Dashboard />
-            // </ProtectedRoute>
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <Dashboard />
-            // </ProtectedRoute>
+            </ProtectedRoute>
           }
         />
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
