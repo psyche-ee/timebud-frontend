@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-// import { usePWAInstall } from "../../hooks/usePWAInstall";
 import Header from "../../components/Header";
 import Logo from "../../assets/earning.svg";
-// import Logo2 from "../../assets/logo.svg";
+import { IoTimeOutline } from "react-icons/io5";
+import { CiEdit } from "react-icons/ci";
+import { MdOutlineDateRange } from "react-icons/md";
 import ActivityCard from "../../components/ActivityCard";
 import RecentRecords from "../../components/Records";
 import BottomNav from "../../components/BottomNav";
@@ -93,11 +94,19 @@ export default function Dashboard() {
 
   const handleManualSubmit = async () => {
     if (!manualTime) {
-      toast.warning("Please select date and time");
+      toast.warning("Please select time");
       return;
     }
 
-    const timestamp = new Date(manualTime).toISOString();
+    const [hours, minutes] = manualTime.split(":");
+
+    const manualDate = new Date();
+    manualDate.setHours(Number(hours));
+    manualDate.setMinutes(Number(minutes));
+    manualDate.setSeconds(0);
+    manualDate.setMilliseconds(0);
+
+    const timestamp = manualDate.toISOString();
 
     if (!navigator.onLine) {
       saveOfflineAction(manualType, timestamp);
@@ -108,7 +117,7 @@ export default function Dashboard() {
 
     try {
       const res = await api.post(
-        manualType === "time-in" ? "/time-in" : "/time-out",
+        manualType === "time-in" ? "/manual-time-in" : "/manual-time-out",
         { timestamp }
       );
 
@@ -234,18 +243,33 @@ export default function Dashboard() {
 
         {/* Time Buttons */}
         <div className="space-y-3">
-          <button className="w-full bg-primary text-white py-3 rounded-xl text-lg font-medium" onClick={handleTimein}>
-            Time In
+          <button 
+            className="group relative w-full bg-linear-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all duration-200 overflow-hidden"
+            onClick={handleTimein}
+          >
+            <div className="absolute inset-0 bg-white/20 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-2xl"></div>
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              <IoTimeOutline size={20} className="text-white" />
+              Time In
+            </span>
           </button>
 
-          <button className="w-full border border-gray-300 text-primary py-3 rounded-xl text-lg font-medium" onClick={handleTimeout}>
-            Time Out
+          <button 
+            className="group relative border border-primary w-full bg-linear-to-r from-gray-100 to-gray-100 text-primary py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl hover:from-gray-200 hover:to-gray-300 active:scale-[0.98] transition-all duration-200 overflow-hidden"
+            onClick={handleTimeout}
+          >
+            <div className="absolute inset-0 bg-white/20 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-2xl"></div>
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              <IoTimeOutline size={20} className="text-primary" />
+              Time Out
+            </span>
           </button>
 
           <button
-            className="w-full border border-primary text-primary py-3 rounded-xl font-medium"
+            className="group relative w-full bg-white/80 backdrop-blur-sm border-2 border-gray-200 text-gray-800 py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-2xl hover:border-gray-300 hover:bg-white active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-3"
             onClick={() => setShowManual(true)}
           >
+            <CiEdit size={20} className="text-black" />
             Manual Entry
           </button>
         </div>
@@ -260,52 +284,83 @@ export default function Dashboard() {
       </div>
 
       {showManual && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-
-        <div className="bg-white rounded-2xl p-6 w-[90%] max-w-sm space-y-4">
-
-          <h2 className="text-lg font-semibold text-center">
-            Manual Time Entry
-          </h2>
-
-          <select
-            className="w-full border rounded-lg p-2"
-            value={manualType}
-            onChange={(e) => setManualType(e.target.value as "time-in" | "time-out")}
-          >
-            <option value="time-in">Time In</option>
-            <option value="time-out">Time Out</option>
-          </select>
-
-          <input
-            type="datetime-local"
-            className="w-full border rounded-lg p-2"
-            value={manualTime}
-            onChange={(e) => setManualTime(e.target.value)}
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setShowManual(false)}
           />
+          
+          {/* Modal */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 w-full max-w-sm shadow-2xl border border-white/50 animate-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
+              
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                 <MdOutlineDateRange size={26} className="text-white" />
+                </div>
+                <h2 className="text-2xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  Manual Entry
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">Record your time manually</p>
+              </div>
 
-          <div className="flex gap-3">
+              {/* Form */}
+              <div className="space-y-6">
+                {/* Type Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Action Type</label>
+                  <div className="relative">
+                    <select
+                      className="w-full appearance-none bg-linear-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-4 pr-12 text-lg font-semibold shadow-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:shadow-md cursor-pointer"
+                      value={manualType}
+                      onChange={(e) => setManualType(e.target.value as "time-in" | "time-out")}
+                    >
+                      <option value="time-in">Time In</option>
+                      <option value="time-out">Time Out</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
 
-            <button
-              className="flex-1 border border-gray-300 py-2 rounded-lg"
-              onClick={() => setShowManual(false)}
-            >
-              Cancel
-            </button>
+                {/* Time Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                  <input
+                    type="time"
+                    className="w-full bg-linear-to-r from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-lg p-4 text-lg font-semibold text-gray-900 shadow-sm focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:shadow-md invalid:border-red-300"
+                    value={manualTime}
+                    max={new Date().toTimeString().slice(0,5)}
+                    onChange={(e) => setManualTime(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
 
-            <button
-              className="flex-1 bg-primary text-white py-2 rounded-lg"
-              onClick={handleManualSubmit}
-            >
-              Submit
-            </button>
-
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-10 pt-8 border-t border-gray-100">
+                <button
+                  className="flex-1 bg-linear-to-r from-gray-100 to-gray-200 text-gray-700 py-4 px-6 rounded-lg font-semibold shadow-sm hover:shadow-md hover:from-gray-200 hover:to-gray-300 active:scale-[0.98] transition-all duration-200 border border-gray-200"
+                  onClick={() => setShowManual(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 bg-linear-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                  onClick={handleManualSubmit}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
           </div>
-
-        </div>
-
-      </div>
-    )}
+        </>
+      )}
 
       <BottomNav />
 
