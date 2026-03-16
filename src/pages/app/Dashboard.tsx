@@ -36,8 +36,9 @@ const syncOfflineActions = async () => {
 };
 
 export default function Dashboard() {
-  // const { installPWA, showInstall } = usePWAInstall();
-  // const [showBanner, setShowBanner] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const [manualType, setManualType] = useState<"time-in" | "time-out">("time-in");
+  const [manualTime, setManualTime] = useState("");
 
   const [time, setTime] = useState(new Date());
   const [dashboard, setDashboard] = useState<any>(() => {
@@ -90,6 +91,40 @@ export default function Dashboard() {
     }
   };
 
+  const handleManualSubmit = async () => {
+    if (!manualTime) {
+      toast.warning("Please select date and time");
+      return;
+    }
+
+    const timestamp = new Date(manualTime).toISOString();
+
+    if (!navigator.onLine) {
+      saveOfflineAction(manualType, timestamp);
+      toast.success("Manual record saved offline.");
+      setShowManual(false);
+      return;
+    }
+
+    try {
+      const res = await api.post(
+        manualType === "time-in" ? "/time-in" : "/time-out",
+        { timestamp }
+      );
+
+      if (res.data.status === 1) {
+        toast.success(res.data.message);
+        setShowManual(false);
+      } else {
+        toast.warning(res.data.message);
+      }
+
+    } catch (err) {
+      saveOfflineAction(manualType, timestamp);
+      toast.success("Saved offline. Will sync later.");
+    }
+  };
+
   // Listen for Online Event
   useEffect(() => {
     const handleOnline = () => {
@@ -136,23 +171,6 @@ export default function Dashboard() {
 
     fetchDashboard();
   }, []);
-
-  // Show install banner
-  // useEffect(() => {
-  //   const dismissed = localStorage.getItem("pwaInstallDismissed");
-
-  //   const isStandalone =
-  //     window.matchMedia("(display-mode: standalone)").matches ||
-  //     (window.navigator as any).standalone === true;
-
-  //   if (!showInstall || dismissed || isStandalone) return;
-
-  //   const timer = setTimeout(() => {
-  //     setShowBanner(true);
-  //   }, 10000);
-
-  //   return () => clearTimeout(timer);
-  // }, [showInstall]);
 
   const formattedTime = time.toLocaleTimeString();
   const formattedDate = time.toLocaleDateString(undefined, {
@@ -223,6 +241,13 @@ export default function Dashboard() {
           <button className="w-full border border-gray-300 text-primary py-3 rounded-xl text-lg font-medium" onClick={handleTimeout}>
             Time Out
           </button>
+
+          <button
+            className="w-full border border-primary text-primary py-3 rounded-xl font-medium"
+            onClick={() => setShowManual(true)}
+          >
+            Manual Entry
+          </button>
         </div>
 
         <ActivityCard activity={dashboard?.today_activity} />
@@ -234,57 +259,53 @@ export default function Dashboard() {
 
       </div>
 
-      {/* Install Banner */}
-      {/* {showBanner && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowBanner(false)}
-          ></div>
+      {showManual && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
-          <div className="relative w-[95%] max-w-md mb-20 bg-white rounded-3xl shadow-xl p-6 animate-slide-up">
-            <div className="flex items-center gap-4">
-              <img
-                src={Logo2}
-                alt="Logo"
-                className="w-12 h-12 rounded-xl"
-              />
+        <div className="bg-white rounded-2xl p-6 w-[90%] max-w-sm space-y-4">
 
-              <div>
-                <h3 className="text-lg font-semibold text-secondary">
-                  Install TimeBud
-                </h3>
+          <h2 className="text-lg font-semibold text-center">
+            Manual Time Entry
+          </h2>
 
-                <p className="text-sm text-gray-500">
-                  Install this app for faster access and a better experience.
-                </p>
-              </div>
+          <select
+            className="w-full border rounded-lg p-2"
+            value={manualType}
+            onChange={(e) => setManualType(e.target.value as "time-in" | "time-out")}
+          >
+            <option value="time-in">Time In</option>
+            <option value="time-out">Time Out</option>
+          </select>
 
-            </div>
+          <input
+            type="datetime-local"
+            className="w-full border rounded-lg p-2"
+            value={manualTime}
+            onChange={(e) => setManualTime(e.target.value)}
+          />
 
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowBanner(false);
-                  localStorage.setItem("pwaInstallDismissed", "true");
-                }}
-                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition"
-              >
-                Not Now
-              </button>
-              <button
-                onClick={async () => {
-                  await installPWA();
-                  setShowBanner(false);
-                }}
-                className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold shadow hover:opacity-90 transition"
-              >
-                Install
-              </button>
-            </div>
+          <div className="flex gap-3">
+
+            <button
+              className="flex-1 border border-gray-300 py-2 rounded-lg"
+              onClick={() => setShowManual(false)}
+            >
+              Cancel
+            </button>
+
+            <button
+              className="flex-1 bg-primary text-white py-2 rounded-lg"
+              onClick={handleManualSubmit}
+            >
+              Submit
+            </button>
+
           </div>
+
         </div>
-      )} */}
+
+      </div>
+    )}
 
       <BottomNav />
 
