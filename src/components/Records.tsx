@@ -22,12 +22,12 @@ export default function Records({ records, rate }: any) {
         return (
           <div
             key={rec.id}
-            className="bg-surface rounded-xl p-4 flex justify-between"
+            className="bg-card border rounded-xl p-4 flex justify-between"
           >
 
             <div>
               <p className="font-medium text-secondary">{date}</p>
-              <p className="text-gray-custom text-sm">{hrs}hrs</p>
+              <p className="text-muted text-sm">{hrs}hrs</p>
             </div>
 
             <p className="text-primary font-semibold text-lg">
