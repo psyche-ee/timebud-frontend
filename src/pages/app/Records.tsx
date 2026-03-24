@@ -196,16 +196,16 @@ export default function Records() {
         )}
 
         {selectionMode && (
-          <div className="flex justify-between items-center bg-red-50 border border-red-200 p-3 rounded-xl">
+          <div className="flex justify-between items-center bg-red-50 dark:bg-card border border-red-200 p-3 rounded-xl">
             
-            <p className="text-sm">
+            <p className="text-sm text-secondary">
               {selectedIds.length} selected
             </p>
 
             <div className="flex gap-2">
               <button
                 onClick={handleSelectAll}
-                className="text-xs px-2 py-1 bg-gray-200 rounded"
+                className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-400 text-secondary rounded"
               >
                 Select All
               </button>
@@ -222,7 +222,7 @@ export default function Records() {
                   setSelectionMode(false);
                   setSelectedIds([]);
                 }}
-                className="text-xs px-2 py-1 bg-gray-300 rounded"
+                className="text-xs px-2 py-1 bg-gray-300 dark:bg-gray-500 text-secondary rounded"
               >
                 Cancel
               </button>

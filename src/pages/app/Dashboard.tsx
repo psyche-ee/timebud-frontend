@@ -228,7 +228,7 @@ export default function Dashboard() {
 
         {/* Modern Digital Clock */}
         <div className="bg-card dark:border text-primary rounded-2xl p-6 text-center shadow-md">
-          <div className="mt-3 flex justify-center">
+          <div className="mb-4 flex justify-center">
             {isClockedIn ? (
               <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600 font-semibold">
                 🟢 Clocked In
