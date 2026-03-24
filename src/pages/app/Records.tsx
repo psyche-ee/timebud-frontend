@@ -128,7 +128,7 @@ export default function Records() {
             <button
               key={d}
               onClick={() => setFilter(d)}
-              className={`px-4 py-1.5 rounded-full text-sm transition
+              className={`px-2 py-1.5 rounded-full text-sm transition
                 ${filter === d ? "bg-primary text-white shadow" : "bg-surface text-gray-600"}`}
             >
               Last {d} days
@@ -180,12 +180,12 @@ export default function Records() {
                 : "Active";
 
               return (
-                <div key={r.id} className="bg-surface p-4 rounded-xl shadow-sm border border-gray-100">
+                <div key={r.id} className="bg-card border  p-4 rounded-xl shadow-sm">
                   <div className="flex justify-between">
                     <div>
-                      <p className="text-sm text-gray-500">{date}</p>
-                      <p className="font-medium">{r.total_hrs} hrs</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-sm text-gray-500 dark:text-700">{date}</p>
+                      <p className="font-medium text-secondary">{r.total_hrs} hrs</p>
+                      <p className="text-xs text-gray-400 dark:text-600 mt-1">
                         {timeIn} — {timeOut}
                       </p>
                     </div>
