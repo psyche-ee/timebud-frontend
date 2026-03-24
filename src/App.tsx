@@ -50,74 +50,70 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* <Route
+          
+          <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/dashboard" element={<Dashboard />} />
+          />
           
-          {/* <Route
+          <Route
             path="/records"
             element={
               <ProtectedRoute>
                 <Records />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/records" element={<Records />} />
+          />
 
-          {/* <Route
+          <Route
             path="/earnings"
             element={
               <ProtectedRoute>
                 <Earnings />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/earnings" element={<Earnings />} />
+          />
 
-          {/* <Route
+          <Route
             path="/settings"
             element={
               <ProtectedRoute>
                 <Settings />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/settings" element={<Settings />} />
+          />
 
-          {/* <Route
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/profile" element={<Profile />} />
+          />
 
-          {/* <Route
+          <Route
             path="/change-password"
             element={
               <ProtectedRoute>
                 <ChangePassword />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/change-password" element={<ChangePassword />} />
-          {/* <Route
+          />
+          
+          <Route
             path="/notifications"
             element={
               <ProtectedRoute>
                 <Notifications />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/notifications" element={<Notifications />} />
+          />
+          
         </Routes>
         <Toaster richColors position="top-center" toastOptions={{
             style: {
