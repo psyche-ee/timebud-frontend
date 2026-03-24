@@ -15,7 +15,26 @@ export default function Records() {
   const exportRef = useRef<HTMLDivElement>(null);
   const [showExportModal, setShowExportModal] = useState(false);
 
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+
   const handlePreview = () => setShowExportModal(true);
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((i) => i !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filteredRecords.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredRecords.map((r) => r.id));
+    }
+  };
 
   // Get current user from localStorage or auth context
   useEffect(() => {
@@ -106,6 +125,25 @@ export default function Records() {
     link.click();
   };
 
+  const handleDelete = async (ids: number[]) => {
+    if (!confirm("Are you sure you want to delete selected record(s)?")) return;
+
+    try {
+      await Promise.all(ids.map(id => api.delete(`/records/${id}`)));
+
+      // Update UI instantly
+      setRecords(prev => prev.filter(r => !ids.includes(r.id)));
+
+      // Reset selection
+      setSelectedIds([]);
+      setSelectionMode(false);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete records");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto p-4 space-y-4">
@@ -157,6 +195,41 @@ export default function Records() {
           </div>
         )}
 
+        {selectionMode && (
+          <div className="flex justify-between items-center bg-red-50 border border-red-200 p-3 rounded-xl">
+            
+            <p className="text-sm">
+              {selectedIds.length} selected
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleSelectAll}
+                className="text-xs px-2 py-1 bg-gray-200 rounded"
+              >
+                Select All
+              </button>
+
+              <button
+                onClick={() => handleDelete(selectedIds)}
+                className="text-xs px-2 py-1 bg-red-500 text-white rounded"
+              >
+                Delete
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectionMode(false);
+                  setSelectedIds([]);
+                }}
+                className="text-xs px-2 py-1 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Records List */}
         {!loading && filteredRecords.length > 0 && (
           <div className="space-y-3">
@@ -180,19 +253,40 @@ export default function Records() {
                 : "Active";
 
               return (
-                <div key={r.id} className="bg-card border  p-4 rounded-xl shadow-sm">
-                  <div className="flex justify-between">
+                <div
+                  key={r.id}
+                  onClick={() => selectionMode && toggleSelect(r.id)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setSelectionMode(true);
+                    toggleSelect(r.id);
+                  }}
+                  className={`bg-card border p-4 rounded-xl shadow-sm flex justify-between cursor-pointer transition
+                    ${selectedIds.includes(r.id) ? "ring-2 ring-red-500" : ""}`}
+                >
+                  <div className="flex gap-3 items-start">
+                    
+                    {/* Checkbox */}
+                    {selectionMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(r.id)}
+                        onChange={() => toggleSelect(r.id)}
+                      />
+                    )}
+
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-700">{date}</p>
+                      <p className="text-sm text-gray-500">{date}</p>
                       <p className="font-medium text-secondary">{r.total_hrs} hrs</p>
-                      <p className="text-xs text-gray-400 dark:text-600 mt-1">
+                      <p className="text-xs text-gray-400 mt-1">
                         {timeIn} — {timeOut}
                       </p>
                     </div>
-                    <p className="font-semibold text-primary">
-                      ₱{r.earnings?.toFixed(2) ?? "0.00"}
-                    </p>
                   </div>
+
+                  <p className="font-semibold text-primary">
+                    ₱{r.earnings?.toFixed(2) ?? "0.00"}
+                  </p>
                 </div>
               );
             })}

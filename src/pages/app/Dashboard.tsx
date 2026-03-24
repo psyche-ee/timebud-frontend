@@ -39,6 +39,7 @@ const syncOfflineActions = async () => {
 export default function Dashboard() {
   const [showManual, setShowManual] = useState(false);
   const [manualType, setManualType] = useState<"time-in" | "time-out">("time-in");
+  const [manualDate, setManualDate] = useState("");
   const [manualTime, setManualTime] = useState("");
 
   const [time, setTime] = useState(new Date());
@@ -46,6 +47,8 @@ export default function Dashboard() {
     const cached = localStorage.getItem("dashboardCache");
     return cached ? JSON.parse(cached) : null;
   });
+
+  const isClockedIn = dashboard?.today_activity?.time_in && !dashboard?.today_activity?.time_out;
 
   const [loading, setLoading] = useState(!dashboard);
 
@@ -98,15 +101,10 @@ export default function Dashboard() {
       return;
     }
 
-    const [hours, minutes] = manualTime.split(":");
+    // const [hours, minutes] = manualTime.split(":");
 
-    const manualDate = new Date();
-    manualDate.setHours(Number(hours));
-    manualDate.setMinutes(Number(minutes));
-    manualDate.setSeconds(0);
-    manualDate.setMilliseconds(0);
-
-    const timestamp = manualDate.toLocaleString("sv-SE").replace(" ", "T");
+    const localDate = new Date(`${manualDate}T${manualTime}`);
+    const timestamp = localDate.toISOString(); // UTC
 
     if (!navigator.onLine) {
       saveOfflineAction(manualType, timestamp);
@@ -230,6 +228,17 @@ export default function Dashboard() {
 
         {/* Modern Digital Clock */}
         <div className="bg-card dark:border text-primary rounded-2xl p-6 text-center shadow-md">
+          <div className="mt-3 flex justify-center">
+            {isClockedIn ? (
+              <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600 font-semibold">
+                🟢 Clocked In
+              </span>
+            ) : (
+              <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-500 font-semibold">
+                🔴 Clocked Out
+              </span>
+            )}
+          </div>
 
           <p className="text-sm opacity-80">
             {formattedDate}
@@ -332,6 +341,16 @@ export default function Dashboard() {
 
               {/* Form */}
               <div className="space-y-6">
+                {/* Date Input */}
+                <div>
+                  <label className="block text-sm font-medium text-muted mb-2">Date</label>
+                  <input
+                    type="date"
+                    className="w-full border rounded-lg px-4 py-2"
+                    value={manualDate}
+                    onChange={(e) => setManualDate(e.target.value)}
+                  />
+                </div>
                 {/* Time Input */}
                 <div>
                   <label className="block text-sm font-medium text-muted mb-2">Time</label>
