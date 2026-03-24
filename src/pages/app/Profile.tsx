@@ -71,7 +71,7 @@ export default function Profile() {
 
           </div>
 
-          <div className="bg-surface rounded-2xl shadow-sm p-6 space-y-6">
+          <div className="bg-card border rounded-2xl shadow-sm p-6 space-y-6">
 
             {/* Avatar */}
             <div className="flex flex-col items-center">
@@ -110,7 +110,7 @@ export default function Profile() {
                 value={profile.f_name}
                 onChange={handleChange}
                 disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
+                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
 
@@ -123,7 +123,7 @@ export default function Profile() {
                 value={profile.m_name || ""}
                 onChange={handleChange}
                 disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
+                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function Profile() {
                 value={profile.l_name}
                 onChange={handleChange}
                 disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
+                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
 
@@ -149,7 +149,7 @@ export default function Profile() {
                 value={profile.dob}
                 onChange={handleChange}
                 disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
+                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
 
@@ -161,7 +161,7 @@ export default function Profile() {
                 value={profile.gender}
                 onChange={handleChange}
                 disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
+                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="">Select</option>
                 <option value="male">Male</option>
@@ -178,7 +178,7 @@ export default function Profile() {
                 value={profile.rate_per_hr}
                 onChange={handleChange}
                 disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
+                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
               />
             </div>
 

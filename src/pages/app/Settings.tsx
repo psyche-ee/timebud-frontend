@@ -71,7 +71,7 @@ export default function Settings() {
 
             <p className="text-sm text-muted mb-2">Account</p>
 
-            <div className="bg-surface rounded-2xl shadow-sm divide-y divide-gray-300">
+            <div className="bg-card border rounded-2xl shadow-sm divide-y divide-gray-300 dark:divide-gray-600">
 
               {/* Profile */}
               <a
@@ -122,7 +122,7 @@ export default function Settings() {
 
             <p className="text-sm text-muted mb-2">Preferences</p>
 
-            <div className="bg-surface rounded-2xl shadow-sm divide-y">
+            <div className="bg-card border rounded-2xl shadow-sm divide-y">
 
               <a
                 href="/notifications"
@@ -150,11 +150,11 @@ export default function Settings() {
           </div>
 
           {/* Logout */}
-          <div className="bg-surface rounded-2xl shadow-sm">
+          <div className="bg-card border rounded-2xl shadow-sm">
 
             <button className="flex items-center gap-3 p-4 text-red-500 w-full" onClick={handleLogout}>
 
-              <div className="bg-red-100 p-2 rounded-lg">
+              <div className="bg-red-100 dark:bg-transparent dark:border p-2 rounded-lg">
                 <FiLogOut className="text-red-500 text-lg" />
               </div>
 

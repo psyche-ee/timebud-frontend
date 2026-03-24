@@ -4,6 +4,7 @@ import api from "../../api/axios";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ModeToggle } from "../../components/mode-toggle";
 
 export default function Login() {
 
@@ -40,16 +41,17 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <div className="absolute top-4 right-4"><ModeToggle /></div>
 
       {/* Logo Section */}
       <div className="mb-8 flex items-center gap-4">
         <img src={Logo} alt="Logo" />
         <div className="h-12 w-1 bg-primary"></div>
-        <h1 className="text-3xl font-bold text-black">Time<span className="text-3xl text-primary">Bud</span></h1>
+        <h1 className="text-3xl font-bold text-secondary">Time<span className="text-3xl text-primary">Bud</span></h1>
       </div>
 
       {/* Login Card */}
-      <div className="w-[80%] max-w-md bg-surface shadow-md rounded-xl p-8">
+      <div className="w-[80%] max-w-md bg-card border shadow-md rounded-xl p-8">
 
         <h2 className="text-2xl font-semibold text-secondary mb-6 text-center">
           Login
@@ -74,7 +76,7 @@ export default function Login() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full text-sm border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -90,7 +92,7 @@ export default function Login() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full text-sm border border-[#D9D9D9] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary"
               />
 
               <button
@@ -113,7 +115,7 @@ export default function Login() {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary-hover transition"
+            className="w-full text-sm bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary-hover transition"
           >
             {loading ? "Logging in..." : "Login"}
           </button>

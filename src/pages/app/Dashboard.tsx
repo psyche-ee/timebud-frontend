@@ -213,7 +213,8 @@ export default function Dashboard() {
         <Header />
         
         {/* Earnings Card */}
-        <div className="bg-surface rounded-xl p-4 shadow-sm flex justify-between items-center">
+        <div className="bg-card dark:border rounded-xl p-4 shadow-sm flex gap-4 items-center">
+          <img src={Logo} className="h-32 w-32" alt="Logo" />
           <div>
             <p className="text-gray-custom text-sm">Weekly Earnings</p>
             <h2 className="text-2xl font-bold text-primary mt-1">₱{dashboard?.weekly_earnings?.toFixed(2)}</h2>
@@ -225,11 +226,10 @@ export default function Dashboard() {
               </p>
             )}
           </div>
-          <img src={Logo} alt="Logo" />
         </div>
 
         {/* Modern Digital Clock */}
-        <div className="bg-surface text-primary rounded-2xl p-6 text-center shadow-md">
+        <div className="bg-card dark:border text-primary rounded-2xl p-6 text-center shadow-md">
 
           <p className="text-sm opacity-80">
             {formattedDate}
@@ -243,35 +243,57 @@ export default function Dashboard() {
 
         {/* Time Buttons */}
         <div className="space-y-3">
+
+          {/* TIME IN */}
           <button 
-            className="group relative w-full bg-linear-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all duration-200 overflow-hidden"
+            className="relative w-full bg-linear-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-200 overflow-hidden flex items-center justify-center"
             onClick={handleTimein}
           >
-            <div className="absolute inset-0 bg-white/20 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-2xl"></div>
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <IoTimeOutline size={20} className="text-white" />
+
+            {/* Floating Manual Button */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation(); // prevent triggering Time In
+                setManualType("time-in");
+                setManualTime("");
+                setShowManual(true);
+              }}
+              className="absolute left-3 w-9 h-9 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-full cursor-pointer transition"
+            >
+              <CiEdit size={18} />
+            </div>
+
+            <span className="flex items-center gap-2">
+              <IoTimeOutline size={20} />
               Time In
             </span>
           </button>
 
+          {/* TIME OUT */}
           <button 
-            className="group relative border border-primary w-full bg-linear-to-r from-gray-100 to-gray-100 text-primary py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl hover:from-gray-200 hover:to-gray-300 active:scale-[0.98] transition-all duration-200 overflow-hidden"
+            className="relative w-full border border-primary bg-background  text-primary py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-200 overflow-hidden flex items-center justify-center"
             onClick={handleTimeout}
           >
-            <div className="absolute inset-0 bg-white/20 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-2xl"></div>
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <IoTimeOutline size={20} className="text-primary" />
+
+            {/* Floating Manual Button */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation(); // prevent triggering Time Out
+                setManualType("time-out");
+                setManualTime("");
+                setShowManual(true);
+              }}
+              className="absolute left-3 w-9 h-9 flex items-center justify-center bg-gray-300 dark:bg-gray-600 dark:border hover:bg-gray-400 rounded-full cursor-pointer transition"
+            >
+              <CiEdit size={18} />
+            </div>
+
+            <span className="flex items-center gap-2">
+              <IoTimeOutline size={20} />
               Time Out
             </span>
           </button>
 
-          <button
-            className="group relative w-full bg-white/80 backdrop-blur-sm border-2 border-gray-200 text-gray-800 py-4 px-6 rounded-lg text-lg font-semibold shadow-lg hover:shadow-2xl hover:border-gray-300 hover:bg-white active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-3"
-            onClick={() => setShowManual(true)}
-          >
-            <CiEdit size={20} className="text-black" />
-            Manual Entry
-          </button>
         </div>
 
         <ActivityCard activity={dashboard?.today_activity} />
@@ -293,47 +315,29 @@ export default function Dashboard() {
           
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 w-full max-w-sm shadow-2xl border border-white/50 animate-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="bg-card backdrop-blur-xl rounded-3xl p-8 w-full max-w-sm shadow-2xl border border-white/50 animate-in slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
               
               {/* Header */}
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-linear-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                 <MdOutlineDateRange size={26} className="text-white" />
+              <div className="flex items-center justify-center gap-2 mb-8">
+                <div className="w-12 h-12 bg-linear-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                 <MdOutlineDateRange size={18} className="text-white" />
                 </div>
-                <h2 className="text-2xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Manual Entry
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">Record your time manually</p>
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-bold">
+                    Manual {manualType === "time-in" ? "Time In" : "Time Out"}
+                  </h2>
+                  <p className="text-gray-500 text-sm">Record your time manually</p>
+                </div>
               </div>
 
               {/* Form */}
               <div className="space-y-6">
-                {/* Type Selector */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Action Type</label>
-                  <div className="relative">
-                    <select
-                      className="w-full appearance-none bg-linear-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-4 pr-12 text-lg font-semibold shadow-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 hover:shadow-md cursor-pointer"
-                      value={manualType}
-                      onChange={(e) => setManualType(e.target.value as "time-in" | "time-out")}
-                    >
-                      <option value="time-in">Time In</option>
-                      <option value="time-out">Time Out</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Time Input */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                  <label className="block text-sm font-medium text-muted mb-2">Time</label>
                   <input
                     type="time"
-                    className="w-full bg-linear-to-r from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-lg p-4 text-lg font-semibold text-gray-900 shadow-sm focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:shadow-md invalid:border-red-300"
+                    className="time-input w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     value={manualTime}
                     max={new Date().toTimeString().slice(0,5)}
                     onChange={(e) => setManualTime(e.target.value)}
@@ -343,15 +347,15 @@ export default function Dashboard() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 mt-10 pt-8 border-t border-gray-100">
+              <div className="flex gap-3 mt-10">
                 <button
-                  className="flex-1 bg-linear-to-r from-gray-100 to-gray-200 text-gray-700 py-4 px-6 rounded-lg font-semibold shadow-sm hover:shadow-md hover:from-gray-200 hover:to-gray-300 active:scale-[0.98] transition-all duration-200 border border-gray-200"
+                  className="flex-1 px-4 py-2 bg-transparent border text-white text-sm rounded-lg font-semibold shadow-sm hover:shadow-md"
                   onClick={() => setShowManual(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="flex-1 bg-linear-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-primary text-white text-sm rounded-lg font-semibold shadow-sm hover:shadow-md"
                   onClick={handleManualSubmit}
                 >
                   Submit

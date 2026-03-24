@@ -59,7 +59,7 @@ export default function Earnings() {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto p-4 space-y-6">
         <Header />
-        <h1 className="text-2xl font-bold text-gray-800">Earnings</h1>
+        <h1 className="text-2xl font-bold text-secondary">Earnings</h1>
 
         {/* Total Earnings Card */}
         <div className="bg-primary/10 rounded-3xl shadow-md p-6 flex flex-col items-center justify-center space-y-2">
@@ -74,8 +74,8 @@ export default function Earnings() {
         </div>
 
         {/* Breakdown Card */}
-        <div className="bg-surface rounded-2xl shadow-md p-4 space-y-3">
-          <h2 className="font-semibold text-gray-700 text-lg">Breakdown</h2>
+        <div className="bg-card border rounded-2xl shadow-md p-4 space-y-3">
+          <h2 className="font-semibold text-secondary text-lg">Breakdown</h2>
 
           {[
             { key: "this_week", label: "This Week" },
@@ -86,11 +86,11 @@ export default function Earnings() {
               key={key}
               className="flex justify-between py-2 border-b border-gray-100"
             >
-              <span className="text-gray-600">{label}</span>
+              <span className="text-accent-foreground">{label}</span>
               {loading ? (
                 <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
               ) : (
-                <span className="font-medium text-gray-800">
+                <span className="font-medium text-accent-foreground">
                   {formatCurrency(earnings[key as keyof typeof earnings])}
                 </span>
               )}

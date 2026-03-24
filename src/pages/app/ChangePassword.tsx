@@ -57,7 +57,8 @@ export default function ChangePassword() {
           <IoChevronBack />
         </a>
 
-        <div className="bg-surface rounded-2xl shadow-md p-6 space-y-5">
+        <div className="bg-card border rounded-2xl shadow-md p-6 space-y-5">
+          <h1 className="text-secondary text-sm">Change Password</h1>
 
           {/* Current Password */}
           <PasswordInput
@@ -97,7 +98,7 @@ export default function ChangePassword() {
               disabled={loading}
               className="flex-1 bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-hover transition disabled:opacity-60"
             >
-              {loading ? "Updating..." : "Update Password"}
+              {loading ? "Updating..." : "Update"}
             </button>
 
             <a
