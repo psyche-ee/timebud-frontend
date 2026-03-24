@@ -128,7 +128,7 @@ export default function Records() {
             <button
               key={d}
               onClick={() => setFilter(d)}
-              className={`px-2 py-1.5 rounded-full text-sm transition
+              className={`px-3 py-1.5 rounded-full text-sm transition
                 ${filter === d ? "bg-primary text-white shadow" : "bg-surface text-gray-600"}`}
             >
               Last {d} days
