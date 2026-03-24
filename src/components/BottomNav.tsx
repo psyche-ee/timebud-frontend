@@ -14,7 +14,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-surface border-t border-gray-200 z-50">
+    <div className="fixed bottom-0 left-0 w-full bg-surface dark:bg-transparent border-t border-gray-200 dark:border-gray-600 z-50">
 
       <div className="max-w-md mx-auto grid grid-cols-4">
 

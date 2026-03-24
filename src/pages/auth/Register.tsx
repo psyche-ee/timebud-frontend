@@ -2,6 +2,25 @@ import { useState } from "react";
 import Logo from "../../assets/logo.svg";
 import api from "../../api/axios";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { ModeToggle } from "../../components/mode-toggle";
+
+import { format } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
+import { cn } from "../../lib/utils"
+import { Button } from "../../components/ui/button"
+import { Calendar } from "../../components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../../components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select"
 
 export default function Register() {
 
@@ -96,16 +115,16 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-
+      <div className="absolute top-4 right-4"><ModeToggle /></div>
       {/* Logo */}
       <div className="mb-8 flex items-center gap-4">
         <img src={Logo} alt="Logo" />
         <div className="h-12 w-1 bg-primary"></div>
-        <h1 className="text-3xl font-bold text-black">Time<span className="text-3xl text-primary">Bud</span></h1>
+        <h1 className="text-3xl font-bold text-secondary">Time<span className="text-3xl text-primary">Bud</span></h1>
       </div>
 
       {/* Register Card */}
-      <div className="w-[90%] max-w-md bg-surface shadow-md rounded-xl p-8">
+      <div className="w-[90%] max-w-md bg-card border shadow-md rounded-xl p-8">
 
         <h2 className="text-2xl font-semibold text-secondary mb-6 text-center">
           Register
@@ -134,7 +153,7 @@ export default function Register() {
                 placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
 
               <div className="relative">
@@ -144,7 +163,7 @@ export default function Register() {
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                 />
 
                 <button
@@ -163,7 +182,7 @@ export default function Register() {
                   placeholder="Confirm Password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                 />
 
                 <button
@@ -178,7 +197,7 @@ export default function Register() {
               <button
                 type="button"
                 onClick={nextStep}
-                className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
+                className="w-full text-sm bg-primary text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
               >
                 Next
               </button>
@@ -194,7 +213,7 @@ export default function Register() {
                 placeholder="First Name"
                 value={formData.fName}
                 onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
 
               <input
@@ -203,7 +222,7 @@ export default function Register() {
                 placeholder="Last Name"
                 value={formData.lName}
                 onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
 
               <input
@@ -212,27 +231,65 @@ export default function Register() {
                 placeholder="Middle Name (optional)"
                 value={formData.mName}
                 onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
 
-              <input
-                type="date"
-                name="dob"
-                value={formData.dob}
-                onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              <Popover>
+                <PopoverTrigger asChild >
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal px-4 py-2 h-auto",
+                      !formData.dob && "text-gray-400 dark:text-zinc-500",
+                      "bg-white border-gray-300 text-gray-900",
+                      "dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.dob ? (
+                      format(new Date(formData.dob), "PPP")
+                    ) : (
+                      <span>Date of Birth</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
 
-              <select
-                name="gender"
+                <PopoverContent className="w-auto p-0 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                  <Calendar
+                    mode="single"
+                    selected={formData.dob ? new Date(formData.dob) : undefined}
+                    onSelect={(date) =>
+                      setFormData({
+                        ...formData,
+                        dob: date ? date.toISOString().split("T")[0] : "",
+                      })
+                    }
+                    disabled={(date) => date > new Date()} // optional (no future DOB)
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover> 
+
+              <Select
                 value={formData.gender}
-                onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                onValueChange={(value) =>
+                  setFormData({ ...formData, gender: value })
+                }
               >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+                <SelectTrigger
+                  className="w-full px-4 py-2 h-auto
+                  bg-white border-gray-300 text-gray-900
+                  dark:bg-zinc-900 dark:border-zinc-800 dark:text-white"
+                >
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+
+                <SelectContent className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
 
               <input
                 type="number"
@@ -240,7 +297,7 @@ export default function Register() {
                 placeholder="Rate per hour"
                 value={formData.ratePerHr}
                 onChange={handleChange}
-                className="w-full border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-white border border-gray-300 text-gray-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
 
               <div className="flex gap-3">
@@ -248,14 +305,14 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="w-full border border-gray-300 py-2 rounded-lg"
+                  className="w-full text-sm border border-gray-300 py-2 rounded-lg"
                 >
                   Back
                 </button>
 
                 <button
                   type="submit"
-                  className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
+                  className="w-full text-sm bg-primary text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
                 >
                   Register
                 </button>
