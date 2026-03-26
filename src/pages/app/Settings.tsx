@@ -8,7 +8,8 @@ import {
   IoPersonOutline,
   IoLockClosedOutline,
   IoNotificationsOutline,
-  IoChevronForward
+  IoChevronForward,
+  IoInformationCircleOutline
 } from "react-icons/io5";
 
 import { GoDownload } from "react-icons/go";
@@ -137,6 +138,31 @@ export default function Settings() {
 
                   <span className="font-medium text-secondary">
                     Notifications
+                  </span>
+
+                </div>
+
+                <IoChevronForward className="text-muted" />
+
+              </a>
+
+            </div>
+
+            <div className="bg-card border rounded-2xl shadow-sm divide-y">
+
+              <a
+                href="/about"
+                className="flex items-center justify-between p-4 hover:bg-gray-50"
+              >
+
+                <div className="flex items-center gap-3">
+
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <IoInformationCircleOutline className="text-primary text-lg" />
+                  </div>
+
+                  <span className="font-medium text-secondary">
+                    About
                   </span>
 
                 </div>

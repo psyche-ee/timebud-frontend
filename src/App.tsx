@@ -17,6 +17,7 @@ import ChangePassword from "./pages/app/ChangePassword";
 import Notifications from "./pages/app/Notifications";
 import { Toaster } from "./components/ui/sonner";
 import ResetPassword from "./pages/auth/ResetPassword";
+import About from "./pages/app/About";
 
 function App() {
 
@@ -110,6 +111,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <About />
               </ProtectedRoute>
             }
           />
