@@ -230,11 +230,11 @@ export default function Dashboard() {
         <div className="bg-card dark:border text-primary rounded-2xl p-6 text-center shadow-md">
           <div className="mb-4 flex justify-center">
             {isClockedIn ? (
-              <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-600 font-semibold">
+              <span className="px-3 py-1 text-xs rounded-full bg-green-100 border border-green-300 text-green-600 font-semibold">
                 🟢 Clocked In
               </span>
             ) : (
-              <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-500 font-semibold">
+              <span className="px-3 py-1 text-xs rounded-full bg-red-100 border border-red-300 text-red-500 font-semibold">
                 🔴 Clocked Out
               </span>
             )}

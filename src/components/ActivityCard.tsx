@@ -25,7 +25,7 @@ export default function ActivityCard({ activity }: any) {
   const hours = activity.total_hrs || 0;
 
   return (
-    <div className="bg-surface dark:bg-transparent dark:border rounded-xl p-4 shadow-sm">
+    <div className="bg-card border rounded-xl p-4 shadow-sm">
 
       <div className="flex justify-between items-center mb-2">
         <p className="font-medium text-secondary">Today's Activity</p>

@@ -157,7 +157,7 @@ export default function Records() {
             {!selectionMode && (
               <button
                 onClick={() => setSelectionMode(true)}
-                className="text-sm bg-gray-200 text-secondary px-3 py-1.5 rounded-lg"
+                className="text-sm bg-gray-200 dark:bg-gray-500 text-secondary px-3 py-1.5 rounded-lg"
               >
                 Select
               </button>
