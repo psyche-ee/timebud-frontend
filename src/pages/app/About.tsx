@@ -24,7 +24,7 @@ export default function About() {
         {/* Hero */}
         <div className="bg-card border rounded-2xl p-5 text-center shadow-sm">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/20 flex items-center justify-center mb-3">
-            <Logo />
+            <img src={ Logo } alt="TimeBud Logo" />
           </div>
 
           <h2 className="text-lg font-semibold text-secondary">Time<span className="text-primary">Bud</span></h2>
