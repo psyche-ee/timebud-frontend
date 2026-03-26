@@ -148,6 +148,13 @@ export default function Settings() {
 
             </div>
 
+          </div>
+
+          {/* About Section */}
+          <div className="mb-6">
+
+            <p className="text-sm text-muted mb-2">About</p>
+
             <div className="bg-card border rounded-2xl shadow-sm divide-y">
 
               <a

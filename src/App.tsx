@@ -18,6 +18,8 @@ import Notifications from "./pages/app/Notifications";
 import { Toaster } from "./components/ui/sonner";
 import ResetPassword from "./pages/auth/ResetPassword";
 import About from "./pages/app/About";
+import PrivacyPolicy from "./pages/app/PrivacyPolicy";
+import Terms from "./pages/app/Terms";
 
 function App() {
 
@@ -120,6 +122,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <About />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/privacy-policy"
+            element={
+              <ProtectedRoute>
+                <PrivacyPolicy />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/terms"
+            element={
+              <ProtectedRoute>
+                <Terms />
               </ProtectedRoute>
             }
           />

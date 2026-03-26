@@ -1,5 +1,6 @@
 import BottomNav from "../../components/BottomNav";
 import Header from "../../components/Header";
+import Logo from "../../assets/logo.svg";
 
 import packageJson from "../../../package.json";
 
@@ -23,11 +24,11 @@ export default function About() {
         {/* Hero */}
         <div className="bg-card border rounded-2xl p-5 text-center shadow-sm">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/20 flex items-center justify-center mb-3">
-            <IoRocketOutline className="text-primary text-2xl" />
+            <Logo />
           </div>
 
-          <h2 className="text-lg font-semibold text-secondary">TimeBud</h2>
-          <p className="text-sm text-muted mt-1">
+          <h2 className="text-lg font-semibold text-secondary">Time<span className="text-primary">Bud</span></h2>
+          <p className="text-sm text-muted dark:text-gray-300 mt-1">
             Track your time. Manage your earnings. Stay productive.
           </p>
         </div>
@@ -39,7 +40,7 @@ export default function About() {
             About the App
           </div>
 
-          <p className="text-sm text-muted leading-relaxed">
+          <p className="text-sm text-muted dark:text-gray-300 leading-relaxed">
             TimeBud is a simple and efficient time tracking application designed
             to help you monitor your working hours and calculate your earnings
             with ease. Whether you're a student, freelancer, or employee,
@@ -54,7 +55,7 @@ export default function About() {
             Features
           </div>
 
-          <ul className="text-sm text-muted space-y-2 list-disc pl-5">
+          <ul className="text-sm text-muted dark:text-gray-300 space-y-2 list-disc pl-5">
             <li>Track daily time in and time out</li>
             <li>Automatically calculate earnings</li>
             <li>View records and history</li>
@@ -70,7 +71,7 @@ export default function About() {
             Developer
           </div>
 
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted dark:text-gray-300">
             Developed by{" "}
             <span className="font-medium text-secondary">
               Edward Belda
@@ -105,7 +106,7 @@ export default function About() {
 
           {/* GitHub */}
           <a
-            href="https://github.com/your-repo"
+            href="https://github.com/psyche-ee/timebud-frontend"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between p-4 hover:bg-gray-50"
