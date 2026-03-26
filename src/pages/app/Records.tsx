@@ -152,12 +152,24 @@ export default function Records() {
         {/* Page Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-semibold">Records</h1>
-          <button
-            onClick={handlePreview}
-            className="text-sm bg-primary text-white px-3 py-1.5 rounded-lg"
-          >
-            Export
-          </button>
+
+          <div className="flex gap-2">
+            {!selectionMode && (
+              <button
+                onClick={() => setSelectionMode(true)}
+                className="text-sm bg-gray-200 text-secondary px-3 py-1.5 rounded-lg"
+              >
+                Select
+              </button>
+            )}
+
+            <button
+              onClick={handlePreview}
+              className="text-sm bg-primary text-white px-3 py-1.5 rounded-lg"
+            >
+              Export
+            </button>
+          </div>
         </div>
 
         {/* Filter Pills */}
@@ -255,11 +267,10 @@ export default function Records() {
               return (
                 <div
                   key={r.id}
-                  onClick={() => selectionMode && toggleSelect(r.id)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setSelectionMode(true);
-                    toggleSelect(r.id);
+                  onClick={() => {
+                    if (selectionMode) {
+                      toggleSelect(r.id);
+                    }
                   }}
                   className={`bg-card border p-4 rounded-xl shadow-sm flex justify-between cursor-pointer transition
                     ${selectedIds.includes(r.id) ? "ring-2 ring-red-500" : ""}`}
