@@ -42,6 +42,15 @@ export default function Dashboard() {
   const [manualDate, setManualDate] = useState("");
   const [manualTime, setManualTime] = useState("");
 
+  const getCurrentDate = () => {
+    return new Date().toISOString().split("T")[0];
+  };
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toTimeString().slice(0, 5);
+  };
+
   const [time, setTime] = useState(new Date());
   const [dashboard, setDashboard] = useState<any>(() => {
     const cached = localStorage.getItem("dashboardCache");
@@ -131,6 +140,13 @@ export default function Dashboard() {
       toast.success("Saved offline. Will sync later.");
     }
   };
+
+  useEffect(() => {
+    if (showManual) {
+      setManualDate(getCurrentDate());
+      setManualTime(getCurrentTime());
+    }
+  }, [showManual]);
 
   // Listen for Online Event
   useEffect(() => {
@@ -368,7 +384,7 @@ export default function Dashboard() {
               {/* Action Buttons */}
               <div className="flex gap-3 mt-10">
                 <button
-                  className="flex-1 px-4 py-2 bg-transparent border text-white text-sm rounded-lg font-semibold shadow-sm hover:shadow-md"
+                  className="flex-1 px-4 py-2 bg-transparent border text-secondary text-sm rounded-lg font-semibold shadow-sm hover:shadow-md"
                   onClick={() => setShowManual(false)}
                 >
                   Cancel
