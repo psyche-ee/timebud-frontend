@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://timebud-backend.onrender.com/api",
+  baseURL: "https://timebud-backend-3tyx.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
