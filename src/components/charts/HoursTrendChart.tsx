@@ -56,13 +56,13 @@ export default function HoursTrendChart({
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              tickFormatter={(value: number) => `${value}h`}
+              tickFormatter={(value: number) => hours(value)}
               width={46}
               allowDecimals
             />
             <Tooltip
               cursor={{ stroke: "var(--primary)", strokeDasharray: "4 4" }}
-              content={<ChartTooltip format={(value) => hours(value)} />}
+              content={<ChartTooltip format={(value) => hours(value)} unit="" />}
             />
             <Area
               type="monotone"
@@ -97,7 +97,7 @@ export default function HoursTrendChart({
           {data.map((point) => (
             <tr key={point.key}>
               <td>{point.fullLabel}</td>
-              <td>{hours(point.hours)} hours</td>
+              <td>{hours(point.hours)}</td>
             </tr>
           ))}
         </tbody>

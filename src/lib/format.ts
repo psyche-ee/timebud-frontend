@@ -3,8 +3,15 @@ import { format } from "date-fns";
 export const currency = (value: number | string | null | undefined) =>
   `₱${(Number(value) || 0).toFixed(2)}`;
 
-export const hours = (value: number | string | null | undefined, digits = 1) =>
-  (Number(value) || 0).toFixed(digits);
+// Hours are real durations: 9.75 means 9 hours 45 minutes, not 9.75 of 100.
+// Convert to whole minutes first so floating point rounding cannot leak into
+// the displayed minutes (e.g. 8.1 becomes 8:06, not 8:05.999…).
+export const hours = (value: number | string | null | undefined) => {
+  const total = Math.round((Number(value) || 0) * 60);
+  const sign = total < 0 ? "-" : "";
+  const absolute = Math.abs(total);
+  return `${sign}${Math.floor(absolute / 60)}:${String(absolute % 60).padStart(2, "0")}`;
+};
 
 export const compactCurrency = (value: number | string | null | undefined) => {
   const amount = Number(value) || 0;

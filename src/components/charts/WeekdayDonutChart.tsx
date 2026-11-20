@@ -51,7 +51,7 @@ export default function WeekdayDonutChart({
                 <Cell key={entry.day} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip content={<ChartTooltip format={(value) => hours(value)} />} />
+            <Tooltip content={<ChartTooltip format={(value) => hours(value)} unit="" />} />
           </PieChart>
         </ResponsiveContainer>
 
@@ -75,7 +75,7 @@ export default function WeekdayDonutChart({
             />
             <span className="text-muted-foreground">{entry.day}</span>
             <span className="tabular ml-auto font-semibold text-foreground">
-              {hours(entry.hours)}h
+              {hours(entry.hours)}
             </span>
           </li>
         ))}
@@ -93,7 +93,7 @@ export default function WeekdayDonutChart({
           {data.map((entry) => (
             <tr key={entry.day}>
               <td>{entry.day}</td>
-              <td>{hours(entry.hours)} hours</td>
+              <td>{hours(entry.hours)}</td>
             </tr>
           ))}
         </tbody>

@@ -143,7 +143,7 @@ export default function Records() {
       <div className="mb-4 grid grid-cols-3 gap-3">
         {[
           { label: "Entries", value: String(filteredRecords.length) },
-          { label: "Total hours", value: `${hours(totals.hours)}h` },
+          { label: "Total hours", value: hours(totals.hours) },
           { label: "Earnings", value: currency(totals.earnings) },
         ].map((item) => (
           <div key={item.label} className="surface-card px-3 py-3 sm:px-4 sm:py-4">
@@ -260,7 +260,7 @@ export default function Records() {
                       {record.time_out ? formatTime(record.time_out) : "Active"}
                     </td>
                     <td className="tabular px-4 py-3 text-right font-medium text-foreground">
-                      {hours(record.total_hrs)}h
+                      {hours(record.total_hrs)}
                     </td>
                     <td className="tabular px-4 py-3 text-right">
                       <span className="font-semibold text-primary">
@@ -268,7 +268,7 @@ export default function Records() {
                       </span>
                       {Number(record.overtime_hrs) > 0 && (
                         <span className="mt-0.5 block text-[11px] font-normal text-amber-600 dark:text-amber-400">
-                          {hours(record.overtime_hrs, 2)}h OT ·{" "}
+                          {hours(record.overtime_hrs)} OT ·{" "}
                           {currency(record.overtime_earnings)}
                         </span>
                       )}
@@ -308,7 +308,7 @@ export default function Records() {
                       {record.time_out ? formatTime(record.time_out) : "Active"}
                     </p>
                     <p className="mt-1 text-xs font-medium text-foreground">
-                      {hours(record.total_hrs)} hours
+                      {hours(record.total_hrs)}
                     </p>
                   </div>
                 </div>
@@ -318,7 +318,7 @@ export default function Records() {
                   </span>
                   {Number(record.overtime_hrs) > 0 && (
                     <span className="mt-0.5 block text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                      {hours(record.overtime_hrs, 2)}h OT ·{" "}
+                      {hours(record.overtime_hrs)} OT ·{" "}
                       {currency(record.overtime_earnings)}
                     </span>
                   )}

@@ -112,7 +112,7 @@ export default function Insights() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           label="Total hours"
-          value={`${hours(summary.totalHours)}h`}
+          value={hours(summary.totalHours)}
           hint={`Across ${range} days`}
           icon={Clock3}
           tone="primary"
@@ -130,7 +130,7 @@ export default function Insights() {
         />
         <StatCard
           label="Avg / active day"
-          value={`${hours(summary.avgHours)}h`}
+          value={hours(summary.avgHours)}
           hint={`${summary.activeDays} active days`}
           icon={TrendingUp}
           tone="sky"
@@ -139,7 +139,7 @@ export default function Insights() {
         />
         <StatCard
           label="Longest session"
-          value={`${hours(summary.longest)}h`}
+          value={hours(summary.longest)}
           hint={summary.bestDay}
           icon={Award}
           tone="violet"
@@ -271,7 +271,7 @@ export default function Insights() {
                   <div>
                     <p className="text-xs text-muted-foreground">Daily average</p>
                     <p className="text-sm font-semibold text-foreground">
-                      {hours(summary.avgHours)} hours
+                      {hours(summary.avgHours)}
                     </p>
                   </div>
                 </li>
@@ -312,7 +312,7 @@ export default function Insights() {
                         {record.time_out ? formatTime(record.time_out) : "Active"}
                       </td>
                       <td className="tabular px-4 py-3 text-right font-medium text-foreground">
-                        {hours(record.total_hrs || 0)}h
+                        {hours(record.total_hrs || 0)}
                       </td>
                       <td className="tabular px-4 py-3 text-right font-semibold text-primary">
                         {currency(record.earnings)}

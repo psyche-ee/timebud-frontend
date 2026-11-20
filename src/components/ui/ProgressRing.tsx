@@ -1,3 +1,5 @@
+import { hours } from "../../lib/format";
+
 interface ProgressRingProps {
   value: number;
   max?: number;
@@ -26,7 +28,7 @@ export default function ProgressRing({
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         role="img"
-        aria-label={`${label ?? "Progress"}: ${value.toFixed(1)} of ${max} hours`}
+        aria-label={`${label ?? "Progress"}: ${hours(value)} of ${hours(max)}`}
       >
         <circle
           cx={size / 2}
@@ -52,7 +54,7 @@ export default function ProgressRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <span className="tabular text-2xl font-bold text-foreground">
-          {value.toFixed(1)}h
+          {hours(value)}
         </span>
         {label && (
           <span className="text-[11px] font-medium text-muted-foreground">{label}</span>

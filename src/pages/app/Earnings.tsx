@@ -7,7 +7,7 @@ import SectionCard from "../../components/ui/SectionCard";
 import EarningsBarChart from "../../components/charts/EarningsBarChart";
 import { useRecords } from "../../hooks/useRecords";
 import { monthlySeries, type DailyPoint } from "../../lib/analytics";
-import { currency } from "../../lib/format";
+import { currency, hours } from "../../lib/format";
 
 const CACHE_KEY = "earningsCache";
 const EMPTY = {
@@ -142,7 +142,7 @@ export default function Earnings() {
         <StatCard
           label="Overtime"
           value={currency(earnings.overtime)}
-          hint={`${earnings.overtime_hrs.toFixed(2)} hrs beyond daily threshold`}
+          hint={`${hours(earnings.overtime_hrs)} beyond daily threshold`}
           icon={TrendingUp}
           tone="amber"
           index={3}
@@ -222,7 +222,7 @@ export default function Earnings() {
             icon: TrendingUp,
             color: "var(--chart-2)",
           },
-        ].map(({ label, value, hours, icon: Icon, color }) => {
+        ].map(({ label, value, hours: workedHours, icon: Icon, color }) => {
           const ratio =
             earnings.total > 0 ? Math.min(1, value / earnings.total) : 0;
           return (
@@ -232,7 +232,7 @@ export default function Earnings() {
                   <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   {label}
                   <span className="text-xs font-normal text-muted-foreground">
-                    ({hours.toFixed(2)} hrs)
+                    ({hours(workedHours)})
                   </span>
                 </span>
                 {loading ? (

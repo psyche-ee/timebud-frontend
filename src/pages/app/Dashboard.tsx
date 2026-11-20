@@ -629,7 +629,7 @@ export default function Dashboard() {
     if (remaining > 0 && remaining <= 1) {
       nudges.push({
         tone: "amber",
-        text: `Overtime in ${hours(remaining)}h — plan your wrap-up.`,
+        text: `Overtime in ${hours(remaining)} — plan your wrap-up.`,
       });
     } else if (remaining <= 0) {
       nudges.push({
@@ -832,7 +832,7 @@ export default function Dashboard() {
             value={todayHours}
             max={8}
             label="of 8h goal"
-            sublabel={todayHours >= 8 ? "Goal reached" : `${hours(8 - todayHours)}h to go`}
+            sublabel={todayHours >= 8 ? "Goal reached" : `${hours(8 - todayHours)} to go`}
           />
           <div className="grid w-full grid-cols-2 gap-2 pt-2 text-center">
             <div className="rounded-xl bg-secondary/70 py-2.5">
@@ -859,7 +859,7 @@ export default function Dashboard() {
       <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           label="Today's hours"
-          value={`${hours(todayHours)}h`}
+          value={hours(todayHours)}
           hint={isClockedIn ? "Session in progress" : "Completed for today"}
           icon={Timer}
           tone="primary"
@@ -868,7 +868,7 @@ export default function Dashboard() {
         />
         <StatCard
           label="Weekly hours"
-          value={`${hours(weeklyHours)}h`}
+          value={hours(weeklyHours)}
           hint="This calendar week"
           icon={Clock3}
           tone="sky"
@@ -943,7 +943,7 @@ export default function Dashboard() {
               <li className="flex items-center justify-between border-t border-border pt-3">
                 <span className="text-xs text-muted-foreground">Total worked</span>
                 <span className="tabular text-sm font-semibold text-foreground">
-                  {hours(activity.total_hrs || 0)} hours
+                  {hours(activity.total_hrs || 0)}
                 </span>
               </li>
             </ol>
@@ -994,7 +994,7 @@ export default function Dashboard() {
                   <p className="tabular mt-0.5 text-xs text-muted-foreground">
                     {formatTime(record.time_in)} –{" "}
                     {record.time_out ? formatTime(record.time_out) : "Active"} ·{" "}
-                    {hours(workedHours)}h
+                    {hours(workedHours)}
                   </p>
                 </div>
                 <span className="tabular shrink-0 text-sm font-semibold text-primary">
@@ -1301,13 +1301,13 @@ export default function Dashboard() {
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="rounded-lg bg-card px-2 py-2.5">
                         <p className="tabular text-sm font-bold text-foreground">
-                          {Number(sessionPreview.net_hrs).toFixed(2)}h
+                          {hours(sessionPreview.net_hrs)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">Net</p>
                       </div>
                       <div className="rounded-lg bg-card px-2 py-2.5">
                         <p className="tabular text-sm font-bold text-amber-600 dark:text-amber-400">
-                          {Number(sessionPreview.overtime_hrs).toFixed(2)}h
+                          {hours(sessionPreview.overtime_hrs)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">Overtime</p>
                       </div>
