@@ -18,6 +18,24 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../api/axios";
+import { Alert, AlertDescription } from "../../components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
 import SectionCard from "../../components/ui/SectionCard";
@@ -217,6 +235,11 @@ export default function Dashboard() {
   const [listening, setListening] = useState(false);
   const [speechSupported] = useState(() => Boolean(getSpeechRecognition()));
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    message: string;
+    warnings: string[];
+  } | null>(null);
+  const confirmationResolve = useRef<((ok: boolean) => void) | null>(null);
 
   // Always release the microphone when the manual-entry modal closes.
   useEffect(() => {
@@ -306,17 +329,26 @@ export default function Dashboard() {
 
   useEffect(() => () => recognitionRef.current?.stop(), []);
 
+  const finishConfirmation = useCallback((ok: boolean) => {
+    confirmationResolve.current?.(ok);
+    confirmationResolve.current = null;
+    setConfirmation(null);
+  }, []);
+
   // Punch endpoints may ask for acknowledgment of anomalous entries. Confirm
-  // with the user, then retry with the short-lived server token.
+  // with a shadcn AlertDialog, then retry with the short-lived server token.
   const postPunch = async (url: string, payload: Record<string, unknown>) => {
     let response = await api.post(url, payload);
     if (response.data?.data?.requires_confirmation) {
-      const warningList = (response.data.data.warnings || [])
-        .map((item: { message: string }) => `• ${item.message}`)
-        .join("\n");
-      const ok = window.confirm(
-        `${response.data.message}\n\n${warningList}\n\nSave anyway?`
-      );
+      const ok = await new Promise<boolean>((resolve) => {
+        confirmationResolve.current = resolve;
+        setConfirmation({
+          message: response.data.message,
+          warnings: (response.data.data.warnings || []).map(
+            (item: { message: string }) => item.message
+          ),
+        });
+      });
       if (!ok) return null;
       response = await api.post(url, {
         ...payload,
@@ -675,16 +707,16 @@ export default function Dashboard() {
       />
 
       {hourlyRate === 0 && (
-        <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>
+        <Alert variant="warning" className="mb-5">
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <AlertDescription>
             Hourly rate isn't set yet.{" "}
             <Link to="/profile" className="font-semibold underline underline-offset-2">
               Set it in your profile
             </Link>{" "}
             to calculate earnings accurately.
-          </span>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -1011,33 +1043,28 @@ export default function Dashboard() {
       </SectionCard>
 
       {/* Manual entry modal */}
-      {showManual && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
-            onClick={closeManual}
-            aria-hidden="true"
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="manual-entry-title"
-            className="surface-card animate-pop relative w-full max-w-md p-6 shadow-2xl"
-          >
-            <div className="mb-5 flex items-start gap-3">
+      <Dialog
+        open={showManual}
+        onOpenChange={(open) => {
+          if (!open) closeManual();
+        }}
+      >
+        <DialogContent className="surface-card flex max-h-[min(85vh,44rem)] max-w-md flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12">
+            <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <CalendarDays className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <h2 id="manual-entry-title" className="text-lg font-bold text-foreground">
-                  Add manual entry
-                </h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <DialogTitle>Add manual entry</DialogTitle>
+                <DialogDescription>
                   Record a missed punch, or describe a whole shift.
-                </p>
+                </DialogDescription>
               </div>
             </div>
+          </DialogHeader>
 
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
             <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-secondary/70 p-1">
               {(["punch", "session"] as const).map((mode) => (
                 <button
@@ -1127,16 +1154,13 @@ export default function Dashboard() {
                       </span>
                     </div>
                     {parsedPunch.warnings?.map((warning) => (
-                      <div
-                        key={warning.code}
-                        className="flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-200"
-                      >
+                      <Alert key={warning.code} variant="warning">
                         <AlertCircle
                           className="mt-0.5 h-3.5 w-3.5 shrink-0"
                           aria-hidden="true"
                         />
-                        <span>{warning.message}</span>
-                      </div>
+                        <AlertDescription>{warning.message}</AlertDescription>
+                      </Alert>
                     ))}
                   </div>
                 )}
@@ -1289,13 +1313,13 @@ export default function Dashboard() {
                     </p>
 
                     {!sessionDraftValid && (
-                      <p className="flex items-start gap-1.5 rounded-lg border border-destructive/25 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                      <Alert variant="destructive">
                         <AlertCircle
                           className="mt-0.5 h-3.5 w-3.5 shrink-0"
                           aria-hidden="true"
                         />
-                        Time out must be after time in.
-                      </p>
+                        <AlertDescription>Time out must be after time in.</AlertDescription>
+                      </Alert>
                     )}
 
                     <div className="grid grid-cols-3 gap-2 text-center">
@@ -1324,16 +1348,13 @@ export default function Dashboard() {
                       </p>
                     )}
                     {parsed.warnings?.map((warning) => (
-                      <div
-                        key={warning.code}
-                        className="flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-200"
-                      >
+                      <Alert key={warning.code} variant="warning">
                         <AlertCircle
                           className="mt-0.5 h-3.5 w-3.5 shrink-0"
                           aria-hidden="true"
                         />
-                        <span>{warning.message}</span>
-                      </div>
+                        <AlertDescription>{warning.message}</AlertDescription>
+                      </Alert>
                     ))}
                   </div>
                 )}
@@ -1358,8 +1379,45 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Anomaly confirmation — replaces the native browser confirm() */}
+      <AlertDialog
+        open={!!confirmation}
+        onOpenChange={(open) => {
+          if (!open) finishConfirmation(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm this entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmation?.message ?? "Something looks unusual about this entry."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {!!confirmation?.warnings.length && (
+            <Alert variant="warning" className="mt-4">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <AlertDescription>
+                <ul className="list-disc space-y-1 pl-4">
+                  {confirmation.warnings.map((warning, index) => (
+                    <li key={`${warning}-${index}`}>{warning}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => finishConfirmation(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => finishConfirmation(true)}>
+              Save anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -13,9 +13,18 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { logout, readUser } from "../../lib/auth";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import PageHeader from "../../components/ui/PageHeader";
 import SectionCard from "../../components/ui/SectionCard";
 import Avatar from "../../components/ui/Avatar";
@@ -87,6 +96,7 @@ function SettingsRow({
 
 export default function Settings() {
   const { installPWA, showInstall } = usePWAInstall();
+  const [installOpen, setInstallOpen] = useState(false);
   const user = readUser();
   const fullName = [user.f_name, user.l_name].filter(Boolean).join(" ") || "Your profile";
   const isStandalone =
@@ -97,8 +107,15 @@ export default function Settings() {
   const handleInstall = () => {
     if (isIOS) {
       toast("Tap Share → Add to Home Screen to install TimeBud.");
-    } else if (showInstall) {
-      installPWA();
+      return;
+    }
+    setInstallOpen(true);
+  };
+
+  const handleDownload = async () => {
+    setInstallOpen(false);
+    if (showInstall) {
+      await installPWA();
     } else {
       toast("Use your browser menu → Install app / Add to Home Screen.");
     }
@@ -217,6 +234,46 @@ export default function Settings() {
           </section>
         </div>
       </div>
+
+      <Dialog open={installOpen} onOpenChange={setInstallOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Download TimeBud</DialogTitle>
+            <DialogDescription>
+              Install the app on your Android device for quick access and offline
+              use.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-start gap-3 rounded-xl border border-border bg-secondary/40 p-3.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Download className="h-[18px] w-[18px]" aria-hidden="true" />
+            </span>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {showInstall
+                ? "Your browser is ready to install TimeBud. Tap below to download and add it to your home screen."
+                : "Open your browser menu and choose Install app or Add to Home Screen to download TimeBud."}
+            </p>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="min-h-11 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </DialogClose>
+            <button
+              type="button"
+              onClick={() => void handleDownload()}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              {showInstall ? "Download & install" : "Got it"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
