@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertCircle,
@@ -68,11 +68,14 @@ type ParsedEntry = {
   break_minutes: number;
   interpreted: string;
   preview: {
+    gross_hrs?: string;
     net_hrs: string;
     regular_hrs: string;
     overtime_hrs: string;
     total_earnings: number;
+    rate_per_hr: string;
     overtime_rate_per_hr: string;
+    threshold_hrs: string;
   };
   warnings: { code: string; message: string; severity: string }[];
 };
@@ -83,6 +86,61 @@ type ParsedPunch = {
   label: string;
   interpreted: string;
   warnings: { code: string; message: string; severity: string }[];
+};
+
+type SessionDraft = {
+  timeIn: string;
+  timeOut: string;
+  breakMinutes: string;
+};
+
+const toTimeInput = (iso: string) => {
+  const value = new Date(iso);
+  if (Number.isNaN(value.getTime())) return "";
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
+};
+
+const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+// Mirrors the backend preview so edits to an interpreted shift immediately
+// update Net, Overtime and Pay. The server recalculates on save.
+const recomputePreview = (base: ParsedEntry["preview"], draft: SessionDraft) => {
+  const start = new Date(draft.timeIn);
+  const end = new Date(draft.timeOut);
+  const elapsed =
+    Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())
+      ? 0
+      : (end.getTime() - start.getTime()) / 3_600_000;
+  // The backend quantizes elapsed/break/net/earnings to cents at each step.
+  const gross = round2(Math.max(0, elapsed));
+  const breakHours = round2(Math.max(0, Number(draft.breakMinutes) || 0) / 60);
+  const net = Math.max(0, round2(gross - breakHours));
+  const rate = Number(base.rate_per_hr) || 0;
+  const overtimeRate = Number(base.overtime_rate_per_hr) || rate;
+  const threshold = Number(base.threshold_hrs) || 0;
+  const overtime = net > threshold ? round2(net - threshold) : 0;
+  const regular = net > threshold ? threshold : net;
+  const regularPay = round2(regular * rate);
+  const overtimePay = round2(overtime * overtimeRate);
+
+  return {
+    ...base,
+    gross_hrs: gross.toFixed(2),
+    net_hrs: net.toFixed(2),
+    regular_hrs: round2(regular).toFixed(2),
+    overtime_hrs: overtime.toFixed(2),
+    total_earnings: round2(regularPay + overtimePay),
+  };
+};
+
+const draftSummary = (draft: SessionDraft) => {
+  const start = new Date(draft.timeIn);
+  const end = new Date(draft.timeOut);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return "Enter a valid time range";
+  }
+  return `${formatDate(start, "EEE, MMM d")}, ${formatTime(start)} to ${formatDate(end, "EEE, MMM d")}, ${formatTime(end)} · ${Math.max(0, Number(draft.breakMinutes) || 0)}m break`;
 };
 
 // Minimal typings for the browser Speech Recognition API (not in TS DOM lib).
@@ -154,6 +212,7 @@ export default function Dashboard() {
   const [parsingPunch, setParsingPunch] = useState(false);
   const [nlText, setNlText] = useState("");
   const [parsed, setParsed] = useState<ParsedEntry | null>(null);
+  const [sessionDraft, setSessionDraft] = useState<SessionDraft | null>(null);
   const [parsing, setParsing] = useState(false);
   const [listening, setListening] = useState(false);
   const [speechSupported] = useState(() => Boolean(getSpeechRecognition()));
@@ -168,6 +227,35 @@ export default function Dashboard() {
   }, [showManual]);
 
   useEffect(() => () => recognitionRef.current?.stop(), []);
+
+  const sessionPreview = useMemo(
+    () =>
+      parsed && sessionDraft
+        ? recomputePreview(parsed.preview, sessionDraft)
+        : parsed?.preview,
+    [parsed, sessionDraft]
+  );
+
+  const isDraftEdited = useMemo(() => {
+    if (!parsed || !sessionDraft) return false;
+    return (
+      sessionDraft.timeIn !== toTimeInput(parsed.time_in) ||
+      sessionDraft.timeOut !== toTimeInput(parsed.time_out) ||
+      Number(sessionDraft.breakMinutes) !== Number(parsed.break_minutes)
+    );
+  }, [parsed, sessionDraft]);
+
+  const sessionDraftValid = useMemo(() => {
+    if (!sessionDraft) return false;
+    const start = new Date(sessionDraft.timeIn);
+    const end = new Date(sessionDraft.timeOut);
+    return (
+      !Number.isNaN(start.getTime()) &&
+      !Number.isNaN(end.getTime()) &&
+      end > start &&
+      Math.max(0, Number(sessionDraft.breakMinutes) || 0) >= 0
+    );
+  }, [sessionDraft]);
 
   const user = readUser();
   const { records } = useRecords();
@@ -294,6 +382,7 @@ export default function Dashboard() {
     setParsedPunch(null);
     setNlText("");
     setParsed(null);
+    setSessionDraft(null);
     setShowManual(true);
   };
 
@@ -427,6 +516,11 @@ export default function Dashboard() {
       if (response.data.status === 1) {
         const result = response.data.data as ParsedEntry;
         setParsed(result);
+        setSessionDraft({
+          timeIn: toTimeInput(result.time_in),
+          timeOut: toTimeInput(result.time_out),
+          breakMinutes: String(result.break_minutes ?? 0),
+        });
         if (result.warnings?.length) {
           toast.warning(`${result.warnings.length} detail(s) to check below.`);
         } else {
@@ -444,25 +538,34 @@ export default function Dashboard() {
   };
 
   const handleSessionSave = async () => {
-    if (!parsed) {
+    if (!parsed || !sessionDraft) {
       toast.warning("Describe and parse a session first.");
       return;
     }
-    if (new Date(parsed.time_in) > new Date()) {
+    if (!sessionDraftValid) {
+      toast.warning("Time out must be after time in. Check the interpreted details.");
+      return;
+    }
+
+    const timeIn = new Date(sessionDraft.timeIn);
+    const timeOut = new Date(sessionDraft.timeOut);
+    if (timeIn > new Date()) {
       toast.warning("Cannot save a future session.");
       return;
     }
+
     try {
       const response = await postPunch("/manual-entry", {
-        time_in: parsed.time_in,
-        time_out: parsed.time_out,
-        break_minutes: parsed.break_minutes,
+        time_in: timeIn.toISOString(),
+        time_out: timeOut.toISOString(),
+        break_minutes: Math.max(0, Number(sessionDraft.breakMinutes) || 0),
       });
       if (!response) return;
       if (response.data.status === 1) {
         toast.success(response.data.message);
         setNlText("");
         setParsed(null);
+        setSessionDraft(null);
         setShowManual(false);
         await fetchDashboard();
       } else {
@@ -1111,34 +1214,113 @@ export default function Dashboard() {
                   {parsing ? "Interpreting…" : "Interpret shift"}
                 </button>
 
-                {parsed && (
+                {parsed && sessionDraft && sessionPreview && (
                   <div className="animate-enter space-y-3 rounded-xl border border-border bg-secondary/40 p-4">
-                    <p className="text-sm font-semibold text-foreground">
-                      {parsed.interpreted}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Interpreted details
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          Edit any value to correct the interpretation.
+                        </p>
+                      </div>
+                      {isDraftEdited && (
+                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          Recalculated
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">
+                          Time in
+                        </span>
+                        <input
+                          type="datetime-local"
+                          value={sessionDraft.timeIn}
+                          onChange={(event) =>
+                            setSessionDraft((current) =>
+                              current ? { ...current, timeIn: event.target.value } : current
+                            )
+                          }
+                          className="tabular min-h-10 w-full rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">
+                          Time out
+                        </span>
+                        <input
+                          type="datetime-local"
+                          value={sessionDraft.timeOut}
+                          onChange={(event) =>
+                            setSessionDraft((current) =>
+                              current ? { ...current, timeOut: event.target.value } : current
+                            )
+                          }
+                          className="tabular min-h-10 w-full rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="block sm:max-w-[10rem]">
+                      <span className="mb-1 block text-[11px] font-medium text-muted-foreground">
+                        Break (minutes)
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={sessionDraft.breakMinutes}
+                        onChange={(event) =>
+                          setSessionDraft((current) =>
+                            current
+                              ? { ...current, breakMinutes: event.target.value }
+                              : current
+                          )
+                        }
+                        className="tabular min-h-10 w-full rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition-colors focus:border-primary"
+                      />
+                    </label>
+
+                    <p className="text-[11px] text-muted-foreground">
+                      {draftSummary(sessionDraft)}
                     </p>
+
+                    {!sessionDraftValid && (
+                      <p className="flex items-start gap-1.5 rounded-lg border border-destructive/25 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                        <AlertCircle
+                          className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                          aria-hidden="true"
+                        />
+                        Time out must be after time in.
+                      </p>
+                    )}
+
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="rounded-lg bg-card px-2 py-2.5">
                         <p className="tabular text-sm font-bold text-foreground">
-                          {Number(parsed.preview.net_hrs).toFixed(2)}h
+                          {Number(sessionPreview.net_hrs).toFixed(2)}h
                         </p>
                         <p className="text-[10px] text-muted-foreground">Net</p>
                       </div>
                       <div className="rounded-lg bg-card px-2 py-2.5">
                         <p className="tabular text-sm font-bold text-amber-600 dark:text-amber-400">
-                          {Number(parsed.preview.overtime_hrs).toFixed(2)}h
+                          {Number(sessionPreview.overtime_hrs).toFixed(2)}h
                         </p>
                         <p className="text-[10px] text-muted-foreground">Overtime</p>
                       </div>
                       <div className="rounded-lg bg-card px-2 py-2.5">
                         <p className="tabular text-sm font-bold text-primary">
-                          {currency(parsed.preview.total_earnings)}
+                          {currency(sessionPreview.total_earnings)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">Pay</p>
                       </div>
                     </div>
-                    {Number(parsed.preview.overtime_hrs) > 0 && (
+                    {Number(sessionPreview.overtime_hrs) > 0 && (
                       <p className="text-[11px] text-muted-foreground">
-                        Overtime paid at ₱{parsed.preview.overtime_rate_per_hr}/hr
+                        Overtime paid at ₱{sessionPreview.overtime_rate_per_hr}/hr
                       </p>
                     )}
                     {parsed.warnings?.map((warning) => (
@@ -1167,7 +1349,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => void handleSessionSave()}
-                    disabled={!parsed}
+                    disabled={!parsed || !sessionDraftValid}
                     className="min-h-11 flex-1 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Save session
