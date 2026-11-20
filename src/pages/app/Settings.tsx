@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import {
+  Check,
   ChevronRight,
   Download,
   FileText,
@@ -27,6 +28,7 @@ function SettingsRow({
   to,
   action,
   external,
+  onClick,
 }: {
   icon: LucideIcon;
   label: string;
@@ -34,6 +36,7 @@ function SettingsRow({
   to?: string;
   action?: ReactNode;
   external?: boolean;
+  onClick?: () => void;
 }) {
   const content = (
     <>
@@ -53,6 +56,13 @@ function SettingsRow({
   const classes =
     "flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors duration-200 hover:bg-secondary/60 first:rounded-t-2xl last:rounded-b-2xl";
 
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={classes}>
+        {content}
+      </button>
+    );
+  }
   if (action) {
     return <div className={classes}>{content}</div>;
   }
@@ -83,13 +93,14 @@ export default function Settings() {
     window.matchMedia("(display-mode: standalone)").matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const canInstall = !isStandalone && (showInstall || isIOS);
 
   const handleInstall = () => {
     if (isIOS) {
       toast("Tap Share → Add to Home Screen to install TimeBud.");
-    } else {
+    } else if (showInstall) {
       installPWA();
+    } else {
+      toast("Use your browser menu → Install app / Add to Home Screen.");
     }
   };
 
@@ -99,18 +110,6 @@ export default function Settings() {
         eyebrow="Account"
         title="Settings"
         description="Manage your profile, preferences, and app information."
-        actions={
-          canInstall ? (
-            <button
-              type="button"
-              onClick={handleInstall}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-3.5 text-xs font-semibold text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.98]"
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Install app
-            </button>
-          ) : undefined
-        }
       />
 
       <section className="surface-card animate-enter mb-4 flex items-center gap-4 p-5">
@@ -152,6 +151,32 @@ export default function Settings() {
               label="Appearance"
               description="Switch between light and dark theme"
               action={<ModeToggle />}
+            />
+          </SectionCard>
+
+          <SectionCard title="App" bodyClassName="divide-y divide-border p-0">
+            <SettingsRow
+              icon={Download}
+              label={isStandalone ? "App installed" : "Download app"}
+              description={
+                isStandalone
+                  ? "TimeBud is running as an installed app"
+                  : "Install TimeBud on your device for quick access"
+              }
+              onClick={isStandalone ? undefined : handleInstall}
+              action={
+                isStandalone ? (
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-secondary px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                    Installed
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white">
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                    Download
+                  </span>
+                )
+              }
             />
           </SectionCard>
         </div>

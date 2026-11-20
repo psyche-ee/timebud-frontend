@@ -872,7 +872,7 @@ export default function Dashboard() {
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         }
-        bodyClassName="divide-y divide-border"
+        bodyClassName="divide-y divide-border px-4 sm:px-5"
       >
         {recentRecords.length ? (
           recentRecords.slice(0, 4).map((record) => {
@@ -882,7 +882,7 @@ export default function Dashboard() {
             return (
               <div
                 key={record.id}
-                className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                className="flex items-center justify-between gap-3 py-3.5"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">

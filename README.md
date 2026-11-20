@@ -30,6 +30,12 @@ The application communicates securely with the **TimeBud Backend API** to handle
 The deployed backend must allow the frontend origin in `CORS_ALLOWED_ORIGINS`
 (currently `https://timebud-frontend.vercel.app`).
 
+### PWA
+
+Production builds register `public/sw.js`, which caches the app shell and local
+assets for offline use. Install TimeBud from **Settings → Download app** (Chrome
+shows the install prompt; on iOS use Share → Add to Home Screen).
+
 ## ✨ Features
 
 - ⏱️ **Time In / Time Out:** Intuitive interface for clocking in and out.

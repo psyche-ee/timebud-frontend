@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +12,33 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // GoogleLogin renders a fixed-width iframe. Measure the available space so
+  // it never spills outside the card on narrow phones.
+  const googleSlotRef = useRef<HTMLDivElement>(null);
+  const [googleWidth, setGoogleWidth] = useState(336);
+
+  useEffect(() => {
+    const element = googleSlotRef.current;
+    if (!element) return;
+
+    const updateWidth = () => {
+      const available = Math.floor(element.clientWidth);
+      if (available > 0) setGoogleWidth(Math.min(336, available));
+    };
+
+    updateWidth();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateWidth);
+      return () => window.removeEventListener("resize", updateWidth);
+    }
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -125,7 +152,7 @@ export default function Login() {
               <span className="flex-1 border-t" />
             </span>
 
-            <div className="mt-6 w-full">
+            <div ref={googleSlotRef} className="mt-6 w-full min-w-0 overflow-hidden">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
@@ -133,7 +160,7 @@ export default function Login() {
                 shape="rectangular"
                 size="large"
                 theme="outline"
-                width={336}
+                width={googleWidth}
                 logo_alignment="center"
               />
             </div>
