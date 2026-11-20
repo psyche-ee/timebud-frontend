@@ -18,6 +18,18 @@
 
 The application communicates securely with the **TimeBud Backend API** to handle authentication, time tracking logic, and earnings calculations.
 
+### API configuration
+
+`src/api/axios.ts` resolves the API base URL as follows:
+
+1. `VITE_API_BASE_URL` (if set) wins — useful for custom environments.
+2. Production builds use `https://timebud-backend-qs8l.onrender.com/api`.
+3. Local dev uses `http://127.0.0.1:8000/api`, or `http://<same-host>:8000/api` when
+   opened from another device on the LAN.
+
+The deployed backend must allow the frontend origin in `CORS_ALLOWED_ORIGINS`
+(currently `https://timebud-frontend.vercel.app`).
+
 ## ✨ Features
 
 - ⏱️ **Time In / Time Out:** Intuitive interface for clocking in and out.
