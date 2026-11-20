@@ -1,213 +1,289 @@
-import Header from "../../components/Header";
-import { IoCameraOutline, IoChevronBack } from "react-icons/io5";
-import { FaUserEdit } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Pencil, Save, X } from "lucide-react";
+import { toast } from "sonner";
+import api from "../../api/axios";
+import PageHeader from "../../components/ui/PageHeader";
+import SectionCard from "../../components/ui/SectionCard";
+import Avatar from "../../components/ui/Avatar";
+import { TextField } from "../../components/ui/FormField";
+import { readUser, writeUser, type SessionUser } from "../../lib/auth";
+import { apiErrorMessage } from "../../lib/error";
+
+type ProfileForm = {
+  f_name: string;
+  m_name: string;
+  l_name: string;
+  email: string;
+  dob: string;
+  gender: string;
+  rate_per_hr: string;
+  overtime_threshold_hrs: string;
+  overtime_rate_per_hr: string;
+};
+
+function initialProfile(): ProfileForm {
+  const user = readUser();
+  return {
+    f_name: user.f_name || "",
+    m_name: user.m_name || "",
+    l_name: user.l_name || "",
+    email: user.email || "",
+    dob: user.dob || "",
+    gender: user.gender || "male",
+    rate_per_hr: String(user.rate_per_hr ?? ""),
+    overtime_threshold_hrs: String(user.overtime_threshold_hrs ?? "8"),
+    // A blank overtime rate means "use the regular rate for overtime too".
+    overtime_rate_per_hr:
+      Number(user.overtime_rate_per_hr) > 0
+        ? String(user.overtime_rate_per_hr)
+        : "",
+  };
+}
+
+function profileFromServer(server: SessionUser): ProfileForm {
+  return {
+    f_name: server.f_name || "",
+    m_name: server.m_name || "",
+    l_name: server.l_name || "",
+    email: server.email || "",
+    dob: server.dob || "",
+    gender: server.gender || "male",
+    rate_per_hr: String(server.rate_per_hr ?? ""),
+    overtime_threshold_hrs: String(server.overtime_threshold_hrs ?? "8"),
+    overtime_rate_per_hr:
+      Number(server.overtime_rate_per_hr) > 0
+        ? String(server.overtime_rate_per_hr)
+        : "",
+  };
+}
+
+const invalidateEarningCaches = () => {
+  ["dashboardCache", "earningsCache", "recordsCache"].forEach((key) =>
+    localStorage.removeItem(key)
+  );
+};
+
+// Blank overtime rate intentionally becomes 0 so the backend uses the
+// regular rate for overtime hours. A blank threshold restores the 8h default.
+function toPayload(form: ProfileForm) {
+  return {
+    ...form,
+    rate_per_hr: form.rate_per_hr === "" ? 0 : Number(form.rate_per_hr),
+    overtime_threshold_hrs:
+      form.overtime_threshold_hrs === "" ? 8 : Number(form.overtime_threshold_hrs),
+    overtime_rate_per_hr:
+      form.overtime_rate_per_hr === "" ? 0 : Number(form.overtime_rate_per_hr),
+  };
+}
 
 export default function Profile() {
-
   const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<ProfileForm>(initialProfile);
 
-  const [profile, setProfile] = useState({
-    f_name: "",
-    m_name: "",
-    l_name: "",
-    email: "",
-    dob: "",
-    gender: "",
-    rate_per_hr: ""
-  });
-
+  // Older versions saved the rate only in localStorage. Migrate it to the API
+  // once so existing hours earn income too.
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const syncProfile = async () => {
+      try {
+        const response = await api.get("/profile");
+        const server = (response.data?.data ?? {}) as SessionUser;
+        const local = readUser();
+        const localRate = Number(local.rate_per_hr) || 0;
+        const serverRate = Number(server.rate_per_hr) || 0;
 
-    setProfile({
-      f_name: user.f_name || "",
-      m_name: user.m_name || "",
-      l_name: user.l_name || "",
-      email: user.email || "",
-      dob: user.dob || "",
-      gender: user.gender || "",
-      rate_per_hr: user.rate_per_hr || ""
-    });
+        let finalUser: SessionUser = server;
+        if (serverRate === 0 && localRate > 0) {
+          const saved = await api.put("/profile", {
+            ...toPayload(initialProfile()),
+            rate_per_hr: localRate,
+          });
+          finalUser = saved.data?.data ?? server;
+          writeUser({ ...local, ...finalUser });
+        } else if (Object.keys(server).length > 0) {
+          writeUser({ ...local, ...server });
+        }
+        if (Object.keys(finalUser).length > 0) {
+          setProfile(profileFromServer(finalUser));
+        }
+        invalidateEarningCaches();
+      } catch {
+        // Keep the locally cached profile if the API is unavailable.
+      }
+    };
+    void syncProfile();
   }, []);
 
-  const handleChange = (e:any) => {
-    const { name, value } = e.target;
+  const update = (key: keyof ProfileForm) => (value: string) =>
+    setProfile((current) => ({ ...current, [key]: value }));
 
-    setProfile({
-      ...profile,
-      [name]: value
-    });
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await api.put("/profile", toPayload(profile));
+      const saved = (response.data?.data ?? {}) as SessionUser;
+      writeUser({ ...readUser(), ...saved });
+      if (Object.keys(saved).length > 0) setProfile(profileFromServer(saved));
+      invalidateEarningCaches();
+      setEditMode(false);
+      toast.success("Profile updated. Your rates are now in effect.");
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not save your profile."));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = () => {
-    localStorage.setItem("user", JSON.stringify(profile));
-    setEditMode(false);
-  };
+  const fullName = [profile.f_name, profile.l_name].filter(Boolean).join(" ") || "Your profile";
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto p-4 space-y-4">
-        <Header />
+    <>
+      <PageHeader
+        eyebrow="Account"
+        title="Profile"
+        description="Your personal details and hourly rate."
+        backTo="/settings"
+        backLabel="Back to settings"
+        actions={
+          !editMode ? (
+            <button
+              type="button"
+              onClick={() => setEditMode(true)}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-3.5 text-xs font-semibold text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.98]"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+              Edit profile
+            </button>
+          ) : undefined
+        }
+      />
 
-        <div className="max-w-md mx-auto">
-
-          {/* Title + Edit */}
-          <div className="flex justify-between items-center mb-6">
-
-            <a href="/settings" className="text-secndary text-xl font-semibold">
-              <IoChevronBack />
-            </a>
-
-            {!editMode && (
-              <button
-                onClick={() => setEditMode(true)}
-                className="flex bg-primary px-4 py-1 rounded-md items-center gap-1 text-surface text-sm font-medium"
-              >
-                <FaUserEdit />
-                Edit
-              </button>
-            )}
-
+      <SectionCard className="mx-auto max-w-3xl">
+        <div className="flex flex-col items-center border-b border-border px-4 py-7 text-center sm:flex-row sm:gap-5 sm:px-6 sm:text-left">
+          <Avatar user={profile} size="lg" />
+          <div className="mt-4 sm:mt-0">
+            <p className="text-lg font-bold text-foreground">{fullName}</p>
+            <p className="text-sm text-muted-foreground">{profile.email || "No email"}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Changes are saved to your account and update your earnings.
+            </p>
           </div>
-
-          <div className="bg-card border rounded-2xl shadow-sm p-6 space-y-6">
-
-            {/* Avatar */}
-            <div className="flex flex-col items-center">
-
-              <div className="relative">
-
-                <img
-                  src="https://i.pravatar.cc/150"
-                  className="w-24 h-24 rounded-full object-cover border-4 border-background shadow-sm"
-                />
-
-                {editMode && (
-                  <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow">
-                    <IoCameraOutline size={16} />
-                  </button>
-                )}
-
-              </div>
-
-              <p className="font-medium text-secondary mt-3">
-                {profile.f_name} {profile.l_name}
-              </p>
-
-              <p className="text-sm text-muted">
-                {profile.email}
-              </p>
-
-            </div>
-
-            {/* First Name */}
-            <div>
-              <label className="text-sm text-muted">First Name</label>
-              <input
-                type="text"
-                name="f_name"
-                value={profile.f_name}
-                onChange={handleChange}
-                disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* Middle Name */}
-            <div>
-              <label className="text-sm text-muted">Middle Name</label>
-              <input
-                type="text"
-                name="m_name"
-                value={profile.m_name || ""}
-                onChange={handleChange}
-                disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* Last Name */}
-            <div>
-              <label className="text-sm text-muted">Last Name</label>
-              <input
-                type="text"
-                name="l_name"
-                value={profile.l_name}
-                onChange={handleChange}
-                disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* DOB */}
-            <div>
-              <label className="text-sm text-muted">Date of Birth</label>
-              <input
-                type="date"
-                name="dob"
-                value={profile.dob}
-                onChange={handleChange}
-                disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label className="text-sm text-muted">Gender</label>
-              <select
-                name="gender"
-                value={profile.gender}
-                onChange={handleChange}
-                disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
-              >
-                <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
-
-            {/* Rate */}
-            <div>
-              <label className="text-sm text-muted">Rate per Hour</label>
-              <input
-                type="number"
-                name="rate_per_hr"
-                value={profile.rate_per_hr}
-                onChange={handleChange}
-                disabled={!editMode}
-                className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-white disabled:opacity-70 focus:ring-2 focus:ring-primary outline-none"
-              />
-            </div>
-
-            {/* Buttons */}
-            {editMode && (
-              <div className="flex gap-3 pt-2">
-
-                <button
-                  onClick={handleSave}
-                  className="flex-1 bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-hover transition"
-                >
-                  Save Changes
-                </button>
-
-                <button
-                  onClick={() => setEditMode(false)}
-                  className="flex-1 border border-gray-300 py-2.5 rounded-lg text-secondary"
-                >
-                  Cancel
-                </button>
-
-              </div>
-            )}
-
-          </div>
-
         </div>
-      </div>
 
-    </div>
+        <div className="grid gap-5 p-4 sm:grid-cols-2 sm:p-6">
+          <TextField
+            label="First name"
+            value={profile.f_name}
+            onChange={update("f_name")}
+            disabled={!editMode}
+            placeholder="First name"
+          />
+          <TextField
+            label="Last name"
+            value={profile.l_name}
+            onChange={update("l_name")}
+            disabled={!editMode}
+            placeholder="Last name"
+          />
+          <TextField
+            label="Middle name"
+            value={profile.m_name}
+            onChange={update("m_name")}
+            disabled={!editMode}
+            placeholder="Optional"
+          />
+          <TextField
+            label="Email address"
+            type="email"
+            value={profile.email}
+            onChange={update("email")}
+            disabled={!editMode}
+            placeholder="you@example.com"
+          />
+          <TextField
+            label="Date of birth"
+            type="date"
+            value={profile.dob}
+            onChange={update("dob")}
+            disabled={!editMode}
+          />
+          <div>
+            <label
+              htmlFor="profile-gender"
+              className="mb-1.5 block text-xs font-medium text-foreground"
+            >
+              Gender
+            </label>
+            <select
+              id="profile-gender"
+              value={profile.gender}
+              onChange={(event) => update("gender")(event.target.value)}
+              disabled={!editMode}
+              className="field-input"
+            >
+              <option value="">Select</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <TextField
+            label="Hourly rate (₱)"
+            type="number"
+            min="0"
+            step="0.01"
+            value={profile.rate_per_hr}
+            onChange={update("rate_per_hr")}
+            disabled={!editMode}
+            placeholder="0.00"
+            hint="Regular pay rate for all worked hours."
+          />
+          <TextField
+            label="Overtime threshold (hrs/day)"
+            type="number"
+            min="0"
+            step="0.25"
+            value={profile.overtime_threshold_hrs}
+            onChange={update("overtime_threshold_hrs")}
+            disabled={!editMode}
+            placeholder="8"
+            hint="Hours beyond this in a single shift count as overtime."
+          />
+          <TextField
+            label="Overtime rate (₱)"
+            type="number"
+            min="0"
+            step="0.01"
+            value={profile.overtime_rate_per_hr}
+            onChange={update("overtime_rate_per_hr")}
+            disabled={!editMode}
+            placeholder="Uses regular rate"
+            hint="Leave blank to pay overtime at your regular hourly rate."
+          />
+        </div>
+
+        {editMode && (
+          <div className="flex flex-col gap-3 border-t border-border px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
+            <button
+              type="button"
+              onClick={() => setEditMode(false)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Save className="h-4 w-4" aria-hidden="true" />
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        )}
+      </SectionCard>
+    </>
   );
 }

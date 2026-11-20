@@ -1,84 +1,88 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import Logo from "../../assets/logo.svg";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../../api/axios";
+import { AuthCard, AuthLayout } from "../../components/layout/AuthLayout";
+import { PasswordField } from "../../components/ui/FormField";
+import { apiErrorMessage } from "../../lib/error";
 
 export default function ResetPassword() {
-
   const [params] = useSearchParams();
   const token = params.get("token");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e:any) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
 
     try {
-
-      const res = await api.post("/reset-password", {
-        token: token,
-        password: password,
-        password_confirmation: confirmPassword
+      const response = await api.post("/reset-password", {
+        token,
+        password,
+        password_confirmation: confirmPassword,
       });
 
-      setMessage(res.data.message);
-      setTimeout(() => {window.location.href = "/login"; }, 2000);
-
-    } catch (err:any) {
-      setMessage(err.response?.data?.message || "Something went wrong");
+      setMessage(response.data.message);
+      setTimeout(() => window.location.assign("/login"), 2000);
+    } catch (error) {
+      setMessage(apiErrorMessage(error, "Something went wrong"));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-
-      {/* Logo */}
-      <div className="mb-8 flex items-center gap-4">
-        <img src={Logo} alt="Logo"/>
-      </div>
-
-      <div className="w-[80%] max-w-md bg-surface shadow-md rounded-xl p-8">
-
-        <h2 className="text-2xl font-semibold text-center mb-6">
-          Reset Password
-        </h2>
-
+    <AuthLayout>
+      <AuthCard
+        eyebrow="Account recovery"
+        title="Reset your password"
+        description="Choose a new password for your TimeBud account."
+        footer={
+          <Link
+            to="/login"
+            className="font-semibold text-primary transition-colors hover:text-primary-hover"
+          >
+            ← Back to sign in
+          </Link>
+        }
+      >
         {message && (
-          <p className="text-center text-sm mb-4 text-primary">
+          <div
+            role="status"
+            className="mb-5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-primary"
+          >
             {message}
-          </p>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          <input
-            type="password"
-            placeholder="New Password"
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <PasswordField
+            label="New password"
             value={password}
-            onChange={(e)=>setPassword(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
+            onChange={setPassword}
+            autoComplete="new-password"
+            hint="At least 6 characters"
+            required
           />
-
-          <input
-            type="password"
-            placeholder="Confirm Password"
+          <PasswordField
+            label="Confirm new password"
             value={confirmPassword}
-            onChange={(e)=>setConfirmPassword(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
+            onChange={setConfirmPassword}
+            autoComplete="new-password"
+            required
           />
-
           <button
             type="submit"
-            className="w-full bg-primary text-white py-2 rounded-lg"
+            disabled={loading}
+            className="min-h-12 w-full rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.99] disabled:opacity-60"
           >
-            Reset Password
+            {loading ? "Resetting…" : "Reset password"}
           </button>
-
         </form>
-
-      </div>
-    </div>
+      </AuthCard>
+    </AuthLayout>
   );
 }

@@ -1,152 +1,121 @@
-import Header from "../../components/Header";
-import { IoEyeOutline, IoEyeOffOutline, IoChevronBack } from "react-icons/io5";
 import { useState } from "react";
-import api from "../../api/axios";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import api from "../../api/axios";
+import PageHeader from "../../components/ui/PageHeader";
+import SectionCard from "../../components/ui/SectionCard";
+import { PasswordField } from "../../components/ui/FormField";
+import { apiErrorMessage } from "../../lib/error";
 
 export default function ChangePassword() {
   const [current, setCurrent] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirm, setConfirm] = useState("");
-    const navigate = useNavigate();
-
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (newPass.length < 6) {
+      toast.warning("New password must be at least 6 characters.");
+      return;
+    }
+    if (newPass !== confirm) {
+      toast.warning("New passwords do not match.");
+      return;
+    }
+
     setLoading(true);
-    setMessage(null);
-    setError(null);
-
     try {
-      const res = await api.post("/change-password", {
+      const response = await api.post("/change-password", {
         current_password: current,
         new_password: newPass,
         confirm_new_password: confirm,
       });
 
-      if (res.data.status === 1) {
-        toast.success(res.data.message);
+      if (response.data.status === 1) {
+        toast.success(response.data.message);
         setCurrent("");
         setNewPass("");
         setConfirm("");
         navigate("/settings");
       } else {
-        toast.error(res.data.message);
+        toast.error(response.data.message);
       }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to change password");
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Failed to change password"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto p-4 space-y-4">
-        <Header />
+    <>
+      <PageHeader
+        eyebrow="Security"
+        title="Change password"
+        description="Use a strong password you haven't used elsewhere."
+        backTo="/settings"
+        backLabel="Back to settings"
+      />
 
-        <a href="/settings" className="text-secondary text-xl font-semibold flex items-center gap-1">
-          <IoChevronBack />
-        </a>
-
-        <div className="bg-card border rounded-2xl shadow-md p-6 space-y-5">
-          <h1 className="text-secondary text-sm">Change Password</h1>
-
-          {/* Current Password */}
-          <PasswordInput
-            label="Current Password"
-            value={current}
-            onChange={setCurrent}
-            show={showCurrent}
-            setShow={setShowCurrent}
-          />
-
-          {/* New Password */}
-          <PasswordInput
-            label="New Password"
-            value={newPass}
-            onChange={setNewPass}
-            show={showNew}
-            setShow={setShowNew}
-          />
-
-          {/* Confirm Password */}
-          <PasswordInput
-            label="Confirm Password"
-            value={confirm}
-            onChange={setConfirm}
-            show={showConfirm}
-            setShow={setShowConfirm}
-          />
-
-          {/* Feedback */}
-          {message && <p className="text-green-600 text-sm">{message}</p>}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="flex-1 bg-primary text-white py-2.5 rounded-lg font-medium hover:bg-primary-hover transition disabled:opacity-60"
-            >
-              {loading ? "Updating..." : "Update"}
-            </button>
-
-            <a
-              href="/settings"
-              className="flex-1 text-center border border-gray-300 py-2.5 rounded-lg text-secondary"
-            >
-              Cancel
-            </a>
+      <SectionCard className="mx-auto max-w-xl">
+        <div className="flex items-center gap-3 border-b border-border px-4 py-5 sm:px-6">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Update your password</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              You'll stay signed in on this device.
+            </p>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-// Reusable Password Input Component
-function PasswordInput({
-  label,
-  value,
-  onChange,
-  show,
-  setShow,
-}: {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  show: boolean;
-  setShow: (val: boolean) => void;
-}) {
-  return (
-    <div>
-      <label className="text-sm text-muted">{label}</label>
-      <div className="relative mt-2">
-        <input
-          type={show ? "text" : "password"}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder={label}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <button
-          type="button"
-          onClick={() => setShow(!show)}
-          className="absolute right-3 top-2.5 text-muted"
-        >
-          {show ? <IoEyeOffOutline /> : <IoEyeOutline />}
-        </button>
-      </div>
-    </div>
+        <form onSubmit={handleSubmit} className="space-y-5 p-4 sm:p-6">
+          <PasswordField
+            label="Current password"
+            value={current}
+            onChange={setCurrent}
+            autoComplete="current-password"
+            required
+          />
+          <PasswordField
+            label="New password"
+            value={newPass}
+            onChange={setNewPass}
+            autoComplete="new-password"
+            hint="At least 6 characters"
+            required
+          />
+          <PasswordField
+            label="Confirm new password"
+            value={confirm}
+            onChange={setConfirm}
+            autoComplete="new-password"
+            required
+          />
+
+          <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => navigate("/settings")}
+              className="min-h-11 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="min-h-11 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-60"
+            >
+              {loading ? "Updating…" : "Update password"}
+            </button>
+          </div>
+        </form>
+      </SectionCard>
+    </>
   );
 }

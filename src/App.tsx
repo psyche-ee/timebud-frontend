@@ -1,157 +1,75 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-import { ThemeProvider } from "./components/theme-provider"
-
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-
-import Dashboard from "./pages/app/Dashboard";
-import Records from "./pages/app/Records";
-import Earnings from "./pages/app/Earnings";
-import Settings from "./pages/app/Settings";
-import Profile from "./pages/app/Profile";
-import ChangePassword from "./pages/app/ChangePassword";
-import Notifications from "./pages/app/Notifications";
+import AppShell from "./components/layout/AppShell";
+import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
-import ResetPassword from "./pages/auth/ResetPassword";
-import About from "./pages/app/About";
-import PrivacyPolicy from "./pages/app/PrivacyPolicy";
-import Terms from "./pages/app/Terms";
+
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+
+const Dashboard = lazy(() => import("./pages/app/Dashboard"));
+const Insights = lazy(() => import("./pages/app/Insights"));
+const Records = lazy(() => import("./pages/app/Records"));
+const Earnings = lazy(() => import("./pages/app/Earnings"));
+const Settings = lazy(() => import("./pages/app/Settings"));
+const Profile = lazy(() => import("./pages/app/Profile"));
+const ChangePassword = lazy(() => import("./pages/app/ChangePassword"));
+const About = lazy(() => import("./pages/app/About"));
+const PrivacyPolicy = lazy(() => import("./pages/app/PrivacyPolicy"));
+const Terms = lazy(() => import("./pages/app/Terms"));
+
+function ProtectedLayout() {
+  return (
+    <ProtectedRoute>
+      <AppShell />
+    </ProtectedRoute>
+  );
+}
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background">
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
+        role="status"
+        aria-label="Loading"
+      />
+    </div>
+  );
+}
 
 function App() {
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((reg) => console.log("SW registered", reg))
-          .catch((err) => console.log("SW registration failed", err));
-      });
-    }
-  }, []);
-
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="timebud-theme">
       <BrowserRouter>
-        <Routes>
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Protected App Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/records"
-            element={
-              <ProtectedRoute>
-                <Records />
-              </ProtectedRoute>
-            }
-          />
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/insights" element={<Insights />} />
+              <Route path="/records" element={<Records />} />
+              <Route path="/earnings" element={<Earnings />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/change-password" element={<ChangePassword />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
+            </Route>
 
-          <Route
-            path="/earnings"
-            element={
-              <ProtectedRoute>
-                <Earnings />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/change-password"
-            element={
-              <ProtectedRoute>
-                <ChangePassword />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/about"
-            element={
-              <ProtectedRoute>
-                <About />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/privacy-policy"
-            element={
-              <ProtectedRoute>
-                <PrivacyPolicy />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/terms"
-            element={
-              <ProtectedRoute>
-                <Terms />
-              </ProtectedRoute>
-            }
-          />
-          
-        </Routes>
-        <Toaster richColors position="top-center" toastOptions={{
-            style: {
-              background: "var(--color-surface)",
-              color: "#111827",
-              border: "1px solid #e5e7eb",
-            },
-          }} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Suspense>
+        <Toaster position="top-center" richColors closeButton />
       </BrowserRouter>
     </ThemeProvider>
   );

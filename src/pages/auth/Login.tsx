@@ -1,26 +1,21 @@
 import { useState } from "react";
-import Logo from "../../assets/logo.svg";
-import api from "../../api/axios";
-import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { ModeToggle } from "../../components/mode-toggle";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import api from "../../api/axios";
+import { AuthCard, AuthLayout } from "../../components/layout/AuthLayout";
+import { PasswordField, TextField } from "../../components/ui/FormField";
 
 export default function Login() {
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const response = await api.post("/login", { email, password });
@@ -32,105 +27,119 @@ export default function Login() {
       } else {
         toast.error(response.data.message || "Login failed");
       }
-    } catch (err: any) {
+    } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    const credential = credentialResponse.credential;
+    if (!credential) return;
+
+    setLoading(true);
+    try {
+      const response = await api.post("/auth/google", { credential });
+
+      if (response.data.status === 1) {
+        localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.data));
+        navigate("/dashboard");
+      } else {
+        toast.error(response.data.message || "Google sign-in failed");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error("Google sign-in was cancelled or could not complete.");
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <div className="absolute top-4 right-4"><ModeToggle /></div>
-
-      {/* Logo Section */}
-      <div className="mb-8 flex items-center gap-4">
-        <img src={Logo} alt="Logo" />
-        <div className="h-12 w-1 bg-primary"></div>
-        <h1 className="text-3xl font-bold text-secondary">Time<span className="text-3xl text-primary">Bud</span></h1>
-      </div>
-
-      {/* Login Card */}
-      <div className="w-[80%] max-w-md bg-card border shadow-md rounded-xl p-8">
-
-        <h2 className="text-2xl font-semibold text-secondary mb-6 text-center">
-          Login
-        </h2>
-
-        {error && (
-          <div className="mb-4 text-red-500 text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        <form className="space-y-4" onSubmit={handleLogin}>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Email
-            </label>
-
-            <input
+    <AuthLayout>
+      <AuthCard
+        eyebrow="Welcome back"
+        title="Sign in to TimeBud"
+        description="Pick up where you left off and keep your day on track."
+        footer={
+          <>
+            New to TimeBud?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-primary transition-colors hover:text-primary-hover"
+            >
+              Create an account
+            </Link>
+          </>
+        }
+      >
+        <GoogleOAuthProvider
+          clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+        >
+          <form onSubmit={handleLogin} className="space-y-5">
+            <TextField
+              label="Email address"
               type="email"
-              placeholder="Enter your email"
+              placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-sm border border-[#D9D9D9] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={setEmail}
+              autoComplete="email"
+              required
             />
-          </div>
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={setPassword}
+              autoComplete="current-password"
+              required
+            />
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Password
-            </label>
-
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-sm border border-[#D9D9D9] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-gray-500"
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-primary transition-colors hover:text-primary-hover"
               >
-                {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
-              </button>
+                Forgot password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary-hover hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Signing in…" : "Sign in"}
+              {!loading && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+            </button>
+          </form>
+
+          <div className="mt-8 w-full">
+            <span className="relative flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex-1 border-t" />
+              Or continue with
+              <span className="flex-1 border-t" />
+            </span>
+
+            <div className="mt-6 w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                text="continue_with"
+                shape="rectangular"
+                size="large"
+                theme="outline"
+                width={336}
+                logo_alignment="center"
+              />
             </div>
           </div>
-
-          {/* Forgot Password */}
-          <div className="text-sm">
-            <a href="/forgot-password" className="text-primary hover:underline">
-              Forgot password?
-            </a>
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="submit"
-            className="w-full text-sm bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary-hover transition"
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-
-        </form>
-
-        {/* Register Link */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Don't have an account?{" "}
-          <a href="/register" className="text-primary font-medium hover:underline">
-            Register
-          </a>
-        </p>
-
-      </div>
-    </div>
+        </GoogleOAuthProvider>
+      </AuthCard>
+    </AuthLayout>
   );
 }

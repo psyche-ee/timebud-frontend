@@ -1,71 +1,76 @@
 import { useState } from "react";
-import Logo from "../../assets/logo.svg";
+import { Link } from "react-router-dom";
+import { Mail, Send } from "lucide-react";
 import api from "../../api/axios";
-import { ModeToggle } from "../../components/mode-toggle";
+import { AuthCard, AuthLayout } from "../../components/layout/AuthLayout";
+import { TextField } from "../../components/ui/FormField";
+import { apiErrorMessage } from "../../lib/error";
 
 export default function ForgotPassword() {
-
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e:any) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
-      const res = await api.post("/forgot-password", {
-        email: email
-      });
-
-      setMessage(res.data.message);
-
-    } catch (err:any) {
-      setMessage(err.response?.data?.message || "Something went wrong");
+      const response = await api.post("/forgot-password", { email });
+      setMessage(response.data.message);
+    } catch (error) {
+      setMessage(apiErrorMessage(error, "Something went wrong"));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <div className="absolute top-4 right-4"><ModeToggle /></div>
-      <div className="mb-8 flex items-center gap-4">
-        <img src={Logo} alt="Logo" />
-        <div className="h-12 w-1 bg-primary"></div>
-        <h1 className="text-3xl font-bold text-secondary">Time<span className="text-3xl text-primary">Bud</span></h1>
-      </div>
-
-      <div className="w-[80%] max-w-md bg-card border shadow-md rounded-xl p-8">
-
-        <h2 className="text-2xl font-semibold text-secondary mb-4 text-center">
-          Forgot Password
-        </h2>
-
+    <AuthLayout>
+      <AuthCard
+        eyebrow="Account recovery"
+        title="Forgot your password?"
+        description="Enter your email and we'll send you a link to reset it."
+        footer={
+          <Link
+            to="/login"
+            className="font-semibold text-primary transition-colors hover:text-primary-hover"
+          >
+            ← Back to sign in
+          </Link>
+        }
+      >
         {message && (
-          <p className="text-sm text-center mb-4 text-primary">
+          <div
+            role="status"
+            className="mb-5 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-primary"
+          >
             {message}
-          </p>
+          </div>
         )}
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-
-          <input
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <TextField
+            label="Email address"
             type="email"
-            placeholder="Enter your email"
+            placeholder="you@example.com"
             value={email}
-            onChange={(e)=>setEmail(e.target.value)}
-            className="w-full text-sm border border-[#D9D9D9] rounded-lg px-4 py-2"
+            onChange={setEmail}
+            autoComplete="email"
+            suffix={<Mail className="h-4 w-4" aria-hidden="true" />}
+            required
           />
-
           <button
             type="submit"
-            className="w-full text-sm bg-primary text-white py-2 rounded-lg"
+            disabled={loading}
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-all duration-200 hover:bg-primary-hover active:scale-[0.99] disabled:opacity-60"
           >
-            Send Reset Link
+            {loading ? "Sending…" : "Send reset link"}
+            {!loading && <Send className="h-4 w-4" aria-hidden="true" />}
           </button>
-
         </form>
-        <h2 className="text-sm text-gray-500 mt-4 text-center">
-          <a href="/login" className="">Remember password? <span className="text-primary">Login</span></a>
-        </h2>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthLayout>
   );
 }
