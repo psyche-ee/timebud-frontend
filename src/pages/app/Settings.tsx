@@ -113,12 +113,8 @@ export default function Settings() {
   };
 
   const handleDownload = async () => {
+    await installPWA();
     setInstallOpen(false);
-    if (showInstall) {
-      await installPWA();
-    } else {
-      toast("Use your browser menu → Install app / Add to Home Screen.");
-    }
   };
 
   return (
@@ -265,11 +261,15 @@ export default function Settings() {
             </DialogClose>
             <button
               type="button"
-              onClick={() => void handleDownload()}
+              onClick={
+                showInstall
+                  ? () => void handleDownload()
+                  : () => setInstallOpen(false)
+              }
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              {showInstall ? "Download & install" : "Got it"}
+              {showInstall ? "Download & install" : "Close"}
             </button>
           </DialogFooter>
         </DialogContent>

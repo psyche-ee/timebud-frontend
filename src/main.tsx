@@ -2,6 +2,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { captureInstallPrompt, clearInstallPrompt } from './lib/pwa'
+
+// Capture the browser's install prompt before React routes mount. Without this,
+// navigating to Settings later misses the one-time `beforeinstallprompt` event
+// and the download button can only show a fallback toast.
+window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+window.addEventListener('appinstalled', clearInstallPrompt)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

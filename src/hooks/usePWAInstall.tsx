@@ -1,44 +1,28 @@
 import { useEffect, useState } from "react";
+import {
+  clearInstallPrompt,
+  getInstallPrompt,
+  PWA_PROMPT_EVENT,
+} from "../lib/pwa";
 
 export const usePWAInstall = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(
-    () => window.deferredPrompt ?? null
-  );
-  const [showInstall, setShowInstall] = useState(() => Boolean(window.deferredPrompt));
+  const [showInstall, setShowInstall] = useState(() => Boolean(getInstallPrompt()));
 
   useEffect(() => {
-    const handler = (event: Event) => {
-      event.preventDefault();
-      const prompt = event as BeforeInstallPromptEvent;
-      window.deferredPrompt = prompt;
-      setDeferredPrompt(prompt);
-      setShowInstall(true);
-    };
-
-    const installed = () => {
-      window.deferredPrompt = undefined;
-      setDeferredPrompt(null);
-      setShowInstall(false);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    window.addEventListener("appinstalled", installed);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      window.removeEventListener("appinstalled", installed);
-    };
+    const sync = () => setShowInstall(Boolean(getInstallPrompt()));
+    sync();
+    window.addEventListener(PWA_PROMPT_EVENT, sync);
+    return () => window.removeEventListener(PWA_PROMPT_EVENT, sync);
   }, []);
 
   const installPWA = async () => {
-    if (!deferredPrompt) return;
+    const prompt = getInstallPrompt();
+    if (!prompt) return false;
 
-    await deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-
-    window.deferredPrompt = undefined;
-    setDeferredPrompt(null);
-    setShowInstall(false);
+    await prompt.prompt();
+    await prompt.userChoice;
+    clearInstallPrompt();
+    return true;
   };
 
   return { showInstall, installPWA };
